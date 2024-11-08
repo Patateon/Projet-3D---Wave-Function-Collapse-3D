@@ -3,10 +3,11 @@
 
 #include <QVector3D>
 #include <vector>
+#include <gameobject.h>
 
 struct Cell {
     bool hasMesh;
-    gameObject mesh;
+    GameObject mesh;
 };
 
 class Grid {

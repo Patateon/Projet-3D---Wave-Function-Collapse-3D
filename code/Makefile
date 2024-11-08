@@ -55,16 +55,15 @@ OBJECTS_DIR   = tmp/obj/
 SOURCES       = src/main.cpp \
 		src/gl/GLUtilityMethods.cpp \
 		src/gl/BasicColors.cpp \
-
 		src/gameobject.cpp \
+		src/grid.cpp \
 		src/transform.cpp tmp/moc/moc_MyViewer.cpp
-    src/grid.cpp tmp/moc/moc_MyViewer.cpp
 OBJECTS       = tmp/obj/main.o \
 		tmp/obj/GLUtilityMethods.o \
 		tmp/obj/BasicColors.o \
 		tmp/obj/gameobject.o \
+		tmp/obj/grid.o \
 		tmp/obj/transform.o \
-    tmp/obj/grid.o 
 		tmp/obj/moc_MyViewer.o
 DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/unix.conf \
@@ -149,16 +148,14 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		src/BasicIO.h \
 		src/gl/GLUtilityMethods.h \
 		src/gl/BasicColors.h \
-
 		src/gameobject.h \
-		src/transform.h src/main.cpp \
+		src/transform.h \
+		src/grid.h src/main.cpp \
 		src/gl/GLUtilityMethods.cpp \
 		src/gl/BasicColors.cpp \
 		src/gameobject.cpp \
-		src/transform.cpp \
-    src/grid.cpp \
-    src/grid.h
-
+		src/grid.cpp \
+		src/transform.cpp
 QMAKE_TARGET  = wfc
 DESTDIR       = 
 TARGET        = wfc
@@ -344,10 +341,8 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-
 	$(COPY_FILE) --parents src/point3.h src/Mesh.h src/MyViewer.h src/BasicIO.h src/gl/GLUtilityMethods.h src/gl/BasicColors.h src/gameobject.h src/transform.h src/grid.h $(DISTDIR)/
-	$(COPY_FILE) --parents src/main.cpp src/gl/GLUtilityMethods.cpp src/gl/BasicColors.cpp src/gameobject.cpp src/transform.cpp src/grid.cpp $(DISTDIR)/
-
+	$(COPY_FILE) --parents src/main.cpp src/gl/GLUtilityMethods.cpp src/gl/BasicColors.cpp src/gameobject.cpp src/grid.cpp src/transform.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -451,18 +446,17 @@ tmp/obj/GLUtilityMethods.o: src/gl/GLUtilityMethods.cpp src/gl/GLUtilityMethods.
 tmp/obj/BasicColors.o: src/gl/BasicColors.cpp src/gl/BasicColors.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o tmp/obj/BasicColors.o src/gl/BasicColors.cpp
 
-
 tmp/obj/gameobject.o: src/gameobject.cpp src/gameobject.h \
 		src/Mesh.h \
-		src/point3.h
+		src/point3.h \
+		src/transform.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o tmp/obj/gameobject.o src/gameobject.cpp
-
-tmp/obj/transform.o: src/transform.cpp src/transform.h
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o tmp/obj/transform.o src/transform.cpp
 
 tmp/obj/grid.o: src/grid.cpp src/grid.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o tmp/obj/grid.o src/grid.cpp
 
+tmp/obj/transform.o: src/transform.cpp src/transform.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o tmp/obj/transform.o src/transform.cpp
 
 tmp/obj/moc_MyViewer.o: tmp/moc/moc_MyViewer.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o tmp/obj/moc_MyViewer.o tmp/moc/moc_MyViewer.cpp

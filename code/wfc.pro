@@ -16,7 +16,6 @@ HEADERS += ./src/point3.h \
     ./src/BasicIO.h \
     ./src/gl/GLUtilityMethods.h \
     ./src/gl/BasicColors.h \
-
     ./src/gameobject.h \
     src/transform.h \
     ./src/grid.h
