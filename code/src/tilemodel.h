@@ -1,22 +1,27 @@
-#ifndef GAMEOBJECT_H
-#define GAMEOBJECT_H
+#ifndef TILEMODEL_H
+#define TILEMODEL_H
 
 #include "Mesh.h"
 #include "transform.h"
 
-class GameObject
+class TileModel
 {
 public:
-    GameObject();
+    // Constructor/Desctructor
+    TileModel(uint id);
+    TileModel(uint id, QString filename);
+    ~TileModel();
 
-    void display();
-
+    // Getter/Setter
+    const uint & id() {return m_id;}
     Mesh & mesh() {return m_mesh;}
-    Transform & transform() {return m_transform;}
 
+    // Mesh file handling
+    void setMesh(Mesh *mesh) {m_mesh = *mesh;}
+    void setMesh(QString filename);
 private:
+    uint m_id;
     Mesh m_mesh;
-    Transform m_transform;
 };
 
-#endif // GAMEOBJECT_H
+#endif // TILEMODEL_H
