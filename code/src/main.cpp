@@ -3,6 +3,7 @@
 #include <QMainWindow>
 #include <QToolBar>
 #include "MyViewer.h"
+#include "grid.h"
 
 
 
@@ -18,10 +19,11 @@ int main( int argc , char** argv )
     toolBar->setAutoFillBackground(true);
     toolBar->setStyleSheet("QToolBar { background: white; }");
     viewer->add_actions_to_toolBar(toolBar);
-
     mainWindow->addToolBar(toolBar);
 
     mainWindow->setCentralWidget(viewer);
+
+    Grid grid(1,1,1,QVector3D(0,0,0));
 
     QObject::connect( viewer , SIGNAL(windowTitleUpdated(QString)) , mainWindow , SLOT(setWindowTitle(QString)) );
     viewer->updateTitle("Wave Function Collapse");

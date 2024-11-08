@@ -1,7 +1,7 @@
 #include "grid.h"
 
 
-Cell::Cell() :  hasMesh(false), meshIndex(-1) {}
+Cell::Cell() :  hasMesh(false){}
 
 
 Grid::Grid() : resX(0), resY(0), resZ(0) {}
@@ -12,7 +12,7 @@ Grid::Grid(int X, int Y, int Z,QVector3D bbMin) {
     resX = X;
     resY = Y;
     resZ = Z;
-    BBMin=bbMin;
+    BBmin=bbMin;
 }
 
 

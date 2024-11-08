@@ -8,19 +8,21 @@
 struct Cell {
     bool hasMesh;
     GameObject mesh;
+
+    Cell();
 };
 
 class Grid {
 public:
     Grid();
-
-    Grid(int X, int Y, int Z,QVector3D bbMin);
+    Grid(int X, int Y, int Z, QVector3D bbMin);
 
     Cell& getCell(int x, int y, int z);
-    void setMesh(GameObject gameobject,int x,int y,int z);
+    void setMesh(GameObject gameObject, int x, int y, int z);
 
     uint getCellIndex(int x, int y, int z) const;
 
+private:
     QVector3D BBmin;
     QVector3D BBmax;
     int resX;
