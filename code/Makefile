@@ -37,7 +37,7 @@ MOVE          = mv -f
 TAR           = tar -cf
 COMPRESS      = gzip -9f
 DISTNAME      = wfc1.0.0
-DISTDIR = /home/e20200008252/Cours/Wave-Function-Collapse-3D/code/tmp/obj/wfc1.0.0
+DISTDIR = /home/thomas/Bureau/Projet3D/Wave-Function-Collapse-3D/code/tmp/obj/wfc1.0.0
 LINK          = g++
 LFLAGS        = -Wl,-O1
 LIBS          = $(SUBLIBS) -Lextern/libQGLViewer-2.6.1/QGLViewer -lQGLViewer-qt5 -lglut -lGLU -lgsl -lblas -lgomp /usr/lib/x86_64-linux-gnu/libQt5OpenGL.so /usr/lib/x86_64-linux-gnu/libQt5Widgets.so /usr/lib/x86_64-linux-gnu/libQt5Gui.so /usr/lib/x86_64-linux-gnu/libQt5Xml.so /usr/lib/x86_64-linux-gnu/libQt5Core.so -lGL -lpthread   
@@ -55,13 +55,16 @@ OBJECTS_DIR   = tmp/obj/
 SOURCES       = src/main.cpp \
 		src/gl/GLUtilityMethods.cpp \
 		src/gl/BasicColors.cpp \
+
 		src/gameobject.cpp \
 		src/transform.cpp tmp/moc/moc_MyViewer.cpp
+    src/grid.cpp tmp/moc/moc_MyViewer.cpp
 OBJECTS       = tmp/obj/main.o \
 		tmp/obj/GLUtilityMethods.o \
 		tmp/obj/BasicColors.o \
 		tmp/obj/gameobject.o \
 		tmp/obj/transform.o \
+    tmp/obj/grid.o 
 		tmp/obj/moc_MyViewer.o
 DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/unix.conf \
@@ -146,12 +149,16 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		src/BasicIO.h \
 		src/gl/GLUtilityMethods.h \
 		src/gl/BasicColors.h \
+
 		src/gameobject.h \
 		src/transform.h src/main.cpp \
 		src/gl/GLUtilityMethods.cpp \
 		src/gl/BasicColors.cpp \
 		src/gameobject.cpp \
-		src/transform.cpp
+		src/transform.cpp \
+    src/grid.cpp \
+    src/grid.h
+
 QMAKE_TARGET  = wfc
 DESTDIR       = 
 TARGET        = wfc
@@ -337,8 +344,10 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents src/point3.h src/Mesh.h src/MyViewer.h src/BasicIO.h src/gl/GLUtilityMethods.h src/gl/BasicColors.h src/gameobject.h src/transform.h $(DISTDIR)/
-	$(COPY_FILE) --parents src/main.cpp src/gl/GLUtilityMethods.cpp src/gl/BasicColors.cpp src/gameobject.cpp src/transform.cpp $(DISTDIR)/
+
+	$(COPY_FILE) --parents src/point3.h src/Mesh.h src/MyViewer.h src/BasicIO.h src/gl/GLUtilityMethods.h src/gl/BasicColors.h src/gameobject.h src/transform.h src/grid.h $(DISTDIR)/
+	$(COPY_FILE) --parents src/main.cpp src/gl/GLUtilityMethods.cpp src/gl/BasicColors.cpp src/gameobject.cpp src/transform.cpp src/grid.cpp $(DISTDIR)/
+
 
 
 clean: compiler_clean 
@@ -391,7 +400,7 @@ tmp/moc/moc_MyViewer.cpp: src/MyViewer.h \
 		qt/QSmartAction.h \
 		tmp/moc/moc_predefs.h \
 		/usr/lib/qt5/bin/moc
-	/usr/lib/qt5/bin/moc $(DEFINES) --include /home/e20200008252/Cours/Wave-Function-Collapse-3D/code/tmp/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/home/e20200008252/Cours/Wave-Function-Collapse-3D/code -I/home/e20200008252/Cours/Wave-Function-Collapse-3D/code -I/home/e20200008252/Cours/Wave-Function-Collapse-3D/code/src -I/home/e20200008252/Cours/Wave-Function-Collapse-3D/code/extern/libQGLViewer-2.6.1 -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtXml -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/7 -I/usr/include/x86_64-linux-gnu/c++/7 -I/usr/include/c++/7/backward -I/usr/lib/gcc/x86_64-linux-gnu/7/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include src/MyViewer.h -o tmp/moc/moc_MyViewer.cpp
+	/usr/lib/qt5/bin/moc $(DEFINES) --include /home/thomas/Bureau/Projet3D/Wave-Function-Collapse-3D/code/tmp/moc/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/home/thomas/Bureau/Projet3D/Wave-Function-Collapse-3D/code -I/home/thomas/Bureau/Projet3D/Wave-Function-Collapse-3D/code -I/home/thomas/Bureau/Projet3D/Wave-Function-Collapse-3D/code/src -I/home/thomas/Bureau/Projet3D/Wave-Function-Collapse-3D/code/extern/libQGLViewer-2.6.1 -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtOpenGL -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtXml -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/11 -I/usr/include/x86_64-linux-gnu/c++/11 -I/usr/include/c++/11/backward -I/usr/lib/gcc/x86_64-linux-gnu/11/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include src/MyViewer.h -o tmp/moc/moc_MyViewer.cpp
 
 compiler_moc_objc_header_make_all:
 compiler_moc_objc_header_clean:
@@ -442,6 +451,7 @@ tmp/obj/GLUtilityMethods.o: src/gl/GLUtilityMethods.cpp src/gl/GLUtilityMethods.
 tmp/obj/BasicColors.o: src/gl/BasicColors.cpp src/gl/BasicColors.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o tmp/obj/BasicColors.o src/gl/BasicColors.cpp
 
+
 tmp/obj/gameobject.o: src/gameobject.cpp src/gameobject.h \
 		src/Mesh.h \
 		src/point3.h
@@ -449,6 +459,10 @@ tmp/obj/gameobject.o: src/gameobject.cpp src/gameobject.h \
 
 tmp/obj/transform.o: src/transform.cpp src/transform.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o tmp/obj/transform.o src/transform.cpp
+
+tmp/obj/grid.o: src/grid.cpp src/grid.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o tmp/obj/grid.o src/grid.cpp
+
 
 tmp/obj/moc_MyViewer.o: tmp/moc/moc_MyViewer.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o tmp/obj/moc_MyViewer.o tmp/moc/moc_MyViewer.cpp
