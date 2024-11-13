@@ -25,7 +25,3 @@ uint Grid::getCellIndex(int x, int y, int z) const {
     return x + resX * (y + resY * z);
 }
 
-void Grid::setMesh(GameObject gameObject,int x,int y,int z){
-    Cell& cell = getCell(x,y,z);
-    cell.mesh=gameObject;
-}

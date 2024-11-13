@@ -3,11 +3,9 @@
 
 #include <QVector3D>
 #include <vector>
-#include <gameobject.h>
 
 struct Cell {
     bool hasMesh;
-    GameObject mesh;
 
     Cell();
 };
@@ -18,7 +16,6 @@ public:
     Grid(int X, int Y, int Z, QVector3D bbMin);
 
     Cell& getCell(int x, int y, int z);
-    void setMesh(GameObject gameObject, int x, int y, int z);
 
     uint getCellIndex(int x, int y, int z) const;
 
