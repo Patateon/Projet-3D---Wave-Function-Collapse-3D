@@ -55,13 +55,15 @@ OBJECTS_DIR   = tmp/obj/
 SOURCES       = src/main.cpp \
 		src/gl/GLUtilityMethods.cpp \
 		src/gl/BasicColors.cpp \
-		src/gameobject.cpp \
+		src/tilemodel.cpp \
+		src/tileinstance.cpp \
 		src/grid.cpp \
 		src/transform.cpp tmp/moc/moc_MyViewer.cpp
 OBJECTS       = tmp/obj/main.o \
 		tmp/obj/GLUtilityMethods.o \
 		tmp/obj/BasicColors.o \
-		tmp/obj/gameobject.o \
+		tmp/obj/tilemodel.o \
+		tmp/obj/tileinstance.o \
 		tmp/obj/grid.o \
 		tmp/obj/transform.o \
 		tmp/obj/moc_MyViewer.o
@@ -148,12 +150,14 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		src/BasicIO.h \
 		src/gl/GLUtilityMethods.h \
 		src/gl/BasicColors.h \
-		src/gameobject.h \
+		src/tilemodel.h \
+		src/tileinstance.h \
 		src/transform.h \
 		src/grid.h src/main.cpp \
 		src/gl/GLUtilityMethods.cpp \
 		src/gl/BasicColors.cpp \
-		src/gameobject.cpp \
+		src/tilemodel.cpp \
+		src/tileinstance.cpp \
 		src/grid.cpp \
 		src/transform.cpp
 QMAKE_TARGET  = wfc
@@ -341,8 +345,8 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents src/point3.h src/Mesh.h src/MyViewer.h src/BasicIO.h src/gl/GLUtilityMethods.h src/gl/BasicColors.h src/gameobject.h src/transform.h src/grid.h $(DISTDIR)/
-	$(COPY_FILE) --parents src/main.cpp src/gl/GLUtilityMethods.cpp src/gl/BasicColors.cpp src/gameobject.cpp src/grid.cpp src/transform.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents src/point3.h src/Mesh.h src/MyViewer.h src/BasicIO.h src/gl/GLUtilityMethods.h src/gl/BasicColors.h src/tilemodel.h src/tileinstance.h src/transform.h src/grid.h $(DISTDIR)/
+	$(COPY_FILE) --parents src/main.cpp src/gl/GLUtilityMethods.cpp src/gl/BasicColors.cpp src/tilemodel.cpp src/tileinstance.cpp src/grid.cpp src/transform.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -446,10 +450,17 @@ tmp/obj/GLUtilityMethods.o: src/gl/GLUtilityMethods.cpp src/gl/GLUtilityMethods.
 tmp/obj/BasicColors.o: src/gl/BasicColors.cpp src/gl/BasicColors.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o tmp/obj/BasicColors.o src/gl/BasicColors.cpp
 
-tmp/obj/gameobject.o: src/gameobject.cpp src/gameobject.h \
+tmp/obj/tilemodel.o: src/tilemodel.cpp src/tilemodel.h \
 		src/Mesh.h \
 		src/point3.h \
-		src/transform.h
+		src/transform.h \
+		src/BasicIO.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o tmp/obj/tilemodel.o src/tilemodel.cpp
+
+tmp/obj/tileinstance.o: src/tileinstance.cpp src/tileinstance.h \
+		src/tilemodel.h \
+		src/Mesh.h \
+		src/point3.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o tmp/obj/gameobject.o src/gameobject.cpp
 
 tmp/obj/grid.o: src/grid.cpp src/grid.h

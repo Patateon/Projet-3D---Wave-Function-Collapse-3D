@@ -25,7 +25,7 @@
 #include <QKeyEvent>
 #include <QInputDialog>
 #include <QLineEdit>
-
+#include <QOpenGLShaderProgram>
 
 #include "qt/QSmartAction.h"
 
@@ -36,6 +36,10 @@ class MyViewer : public QGLViewer , public QOpenGLFunctions_4_3_Core
 
     Mesh mesh;
 
+    QOpenGLShaderProgram *program = nullptr;
+    GLuint vShader;
+    GLuint fShader;
+
     QWidget * controls;
 
 public :
@@ -43,6 +47,9 @@ public :
     MyViewer(QGLWidget * parent = NULL) : QGLViewer(parent) , QOpenGLFunctions_4_3_Core() {
     }
 
+    ~MyViewer(){
+        delete program;
+    }
 
 
     void add_actions_to_toolBar(QToolBar *toolBar)
@@ -98,10 +105,22 @@ public :
         showEntireScene();
     }
 
+    void initializeGL(){
+        delete program;
+        program = new QOpenGLShaderProgram;
+        std::string path = "GLSL/shaders/";
+        std::string vShaderPath = path + "volume.vert";
+        std::string fShaderPath = path + "volume.frag";
+
+
+//        program->link();
+    }
+
 
     void init() {
         makeCurrent();
         initializeOpenGLFunctions();
+        initializeGL();
 
         setMouseTracking(true);// Needed for MouseGrabber.
 

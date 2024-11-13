@@ -4,7 +4,8 @@
 #include <vector>
 #include "point3.h"
 
-
+#include <QOpenGLVertexArrayObject>
+#include <QOpenGLBuffer>
 
 struct Vertex{
     point3d p;
@@ -22,6 +23,17 @@ struct Triangle{
 struct Mesh{
     std::vector< Vertex > vertices;
     std::vector< Triangle > triangles;
+    QOpenGLVertexArrayObject *VAO = nullptr;
+    QOpenGLBuffer *vbo_vertex = nullptr;
+    QOpenGLBuffer *vbo_triangles = nullptr;
+
+    void initVAO(GLuint program) {
+        VAO = new QOpenGLVertexArrayObject;
+        if (VAO->create())
+            VAO->bind();
+
+        program.bind();
+    }
 };
 
 
