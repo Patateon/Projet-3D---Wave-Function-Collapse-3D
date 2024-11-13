@@ -2,25 +2,29 @@
 #define GRID_H
 
 #include <QVector3D>
+#include <QOpenGLFunctions_4_5_Core>
+#include <QOpenGLShaderProgram>
 #include <vector>
-#include <gameobject.h>
+#include <tileinstance.h>
 
 struct Cell {
     bool hasMesh;
-    GameObject mesh;
+    TileInstance object;
 
     Cell();
 };
 
-class Grid {
+class Grid : protected QOpenGLFunctions_4_5_Core {
 public:
     Grid();
-    Grid(int X, int Y, int Z, QVector3D bbMin);
+    Grid(int X, int Y, int Z, int dimX, int dimY, int dimZ, QVector3D bbMin,int nModel);
 
     Cell& getCell(int x, int y, int z);
-    void setMesh(GameObject gameObject, int x, int y, int z);
+    void setObject(TileInstance object, int x, int y, int z);
 
     uint getCellIndex(int x, int y, int z) const;
+    void initializeBuffers();
+    void render(GLuint program);
 
 private:
     QVector3D BBmin;
@@ -29,6 +33,12 @@ private:
     int resY;
     int resZ;
     std::vector<Cell> cells;
+    float dimX;
+    float dimY;
+    float dimZ;
+    QVector<QVector<QVector3D>> modelPos;
+    QVector<QVector<QMatrix4x4>> modelMatrixes;
+    GLuint matrixVBO;
 };
 
 #endif // GRID_H

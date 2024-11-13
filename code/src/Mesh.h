@@ -32,7 +32,7 @@ struct Mesh{
         if (VAO->create())
             VAO->bind();
 
-        program.bind();
+        //program.bind();
     }
 };
 

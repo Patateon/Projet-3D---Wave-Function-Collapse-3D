@@ -19,6 +19,8 @@ public:
     // Mesh file handling
     void setMesh(Mesh *mesh) {m_mesh = *mesh;}
     void setMesh(QString filename);
+
+    uint getId();
 private:
     uint m_id;
     Mesh m_mesh;

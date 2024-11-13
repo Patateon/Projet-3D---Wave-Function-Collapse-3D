@@ -432,7 +432,11 @@ tmp/obj/main.o: src/main.cpp src/MyViewer.h \
 		extern/libQGLViewer-2.6.1/QGLViewer/constraint.h \
 		src/gl/GLUtilityMethods.h \
 		src/gl/BasicColors.h \
-		qt/QSmartAction.h
+		qt/QSmartAction.h \
+		src/grid.h \
+		src/tileinstance.h \
+		src/tilemodel.h \
+		src/transform.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o tmp/obj/main.o src/main.cpp
 
 tmp/obj/GLUtilityMethods.o: src/gl/GLUtilityMethods.cpp src/gl/GLUtilityMethods.h \
@@ -460,10 +464,16 @@ tmp/obj/tilemodel.o: src/tilemodel.cpp src/tilemodel.h \
 tmp/obj/tileinstance.o: src/tileinstance.cpp src/tileinstance.h \
 		src/tilemodel.h \
 		src/Mesh.h \
-		src/point3.h
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o tmp/obj/gameobject.o src/gameobject.cpp
+		src/point3.h \
+		src/transform.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o tmp/obj/tileinstance.o src/tileinstance.cpp
 
-tmp/obj/grid.o: src/grid.cpp src/grid.h
+tmp/obj/grid.o: src/grid.cpp src/grid.h \
+		src/tileinstance.h \
+		src/tilemodel.h \
+		src/Mesh.h \
+		src/point3.h \
+		src/transform.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o tmp/obj/grid.o src/grid.cpp
 
 tmp/obj/transform.o: src/transform.cpp src/transform.h

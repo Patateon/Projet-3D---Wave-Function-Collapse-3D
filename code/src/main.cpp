@@ -23,7 +23,7 @@ int main( int argc , char** argv )
 
     mainWindow->setCentralWidget(viewer);
 
-    Grid grid(1,1,1,QVector3D(0,0,0));
+    Grid grid(1,1,1,1,1,1,QVector3D(0,0,0),5);
 
     QObject::connect( viewer , SIGNAL(windowTitleUpdated(QString)) , mainWindow , SLOT(setWindowTitle(QString)) );
     viewer->updateTitle("Wave Function Collapse");

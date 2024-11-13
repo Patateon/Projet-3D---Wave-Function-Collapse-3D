@@ -106,6 +106,7 @@ public :
     }
 
     void initializeGL(){
+        initializeOpenGLFunctions();
         delete program;
         program = new QOpenGLShaderProgram;
         std::string path = "GLSL/shaders/";
@@ -119,7 +120,7 @@ public :
 
     void init() {
         makeCurrent();
-        initializeOpenGLFunctions();
+
         initializeGL();
 
         setMouseTracking(true);// Needed for MouseGrabber.
