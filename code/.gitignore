@@ -11,6 +11,8 @@
 *.dylib
 
 # Qt-es
+Makefile
+.qtc_clangd
 object_script.*.Release
 object_script.*.Debug
 *_plugin_import.cpp
