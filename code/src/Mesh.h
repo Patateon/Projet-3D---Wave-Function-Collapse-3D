@@ -6,6 +6,7 @@
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
+#include <QOpenGLShaderProgram>
 
 struct Vertex{
     point3d p;
@@ -23,16 +24,64 @@ struct Triangle{
 struct Mesh{
     std::vector< Vertex > vertices;
     std::vector< Triangle > triangles;
-    QOpenGLVertexArrayObject *VAO = nullptr;
+    QOpenGLVertexArrayObject *vao = nullptr;
     QOpenGLBuffer *vbo_vertex = nullptr;
     QOpenGLBuffer *vbo_triangles = nullptr;
 
-    void initVAO(GLuint program) {
-        VAO = new QOpenGLVertexArrayObject;
-        if (VAO->create())
-            VAO->bind();
+    void initVAO(QOpenGLShaderProgram* program) {
 
-        program.bind();
+        if (vertices.empty() || triangles.empty()){
+            return;
+        }
+
+        program->bind();
+
+        vao = new QOpenGLVertexArrayObject();
+        if (!vao->create()){
+            program->release();
+            return;
+        }
+        vao->bind();
+
+        vbo_vertex = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+        if (!vbo_vertex->create()){
+            program->release();
+            return;
+        }
+        vbo_vertex->bind();
+        vbo_vertex->setUsagePattern(QOpenGLBuffer::StaticDraw);
+        vbo_vertex->allocate(vertices.data(), vertices.size() * sizeof(point3d));
+
+        vbo_triangles = new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
+        if (!vbo_triangles->create()){
+            program->release();
+            return;
+        }
+        vbo_triangles->bind();
+        vbo_triangles->setUsagePattern(QOpenGLBuffer::StaticDraw);
+        vbo_triangles->allocate(triangles.data(), triangles.size() * 3 * sizeof(uint));
+
+        vao->release();
+        program->release();
+    }
+
+    void render(QOpenGLShaderProgram* program) {
+        program->bind();
+        if (vao == nullptr){
+            return;
+        }
+        vao->bind();
+
+        glDrawElements(GL_TRIANGLES, triangles.size() * 3, GL_UNSIGNED_INT, nullptr);
+
+        vao->release();
+        program->release();
+    }
+
+    void clear() {
+        vao->destroy();
+        vbo_vertex->destroy();
+        vbo_triangles->destroy();
     }
 };
 

@@ -37,8 +37,10 @@ class MyViewer : public QGLViewer , public QOpenGLFunctions_4_3_Core
     Mesh mesh;
 
     QOpenGLShaderProgram *program = nullptr;
-    GLuint vShader;
-    GLuint fShader;
+
+    GLuint vertexPosition = 0;
+    GLuint vertexNormal = 0;
+    GLuint vertexColor = 0;
 
     QWidget * controls;
 
@@ -48,6 +50,7 @@ public :
     }
 
     ~MyViewer(){
+        mesh.clear();
         delete program;
     }
 
@@ -71,23 +74,13 @@ public :
         toolBar->addAction( saveSnapShotPlusPlus );
     }
 
+    void draw() override {
+        program->bind();
 
-    void draw() {
         glEnable(GL_DEPTH_TEST);
-        glEnable( GL_LIGHTING );
-        glColor3f(0.5,0.5,0.8);
-        glBegin(GL_TRIANGLES);
-        for( unsigned int t = 0 ; t < mesh.triangles.size() ; ++t ) {
-            point3d const & p0 = mesh.vertices[ mesh.triangles[t][0] ].p;
-            point3d const & p1 = mesh.vertices[ mesh.triangles[t][1] ].p;
-            point3d const & p2 = mesh.vertices[ mesh.triangles[t][2] ].p;
-            point3d const & n = point3d::cross( p1-p0 , p2-p0 ).direction();
-            glNormal3f(n[0],n[1],n[2]);
-            glVertex3f(p0[0],p0[1],p0[2]);
-            glVertex3f(p1[0],p1[1],p1[2]);
-            glVertex3f(p2[0],p2[1],p2[2]);
-        }
-        glEnd();
+        mesh.render(program);
+
+        program->release();
     }
 
     void pickBackgroundColor() {
@@ -105,21 +98,38 @@ public :
         showEntireScene();
     }
 
-    void initializeGL(){
-        delete program;
-        program = new QOpenGLShaderProgram;
-        std::string path = "GLSL/shaders/";
-        std::string vShaderPath = path + "volume.vert";
-        std::string fShaderPath = path + "volume.frag";
+    void initializeGL() override{
+        initializeOpenGLFunctions();
 
+        initializeShaders();
 
-//        program->link();
+        vertexPosition = program->attributeLocation("vertexPosition");
+        vertexNormal = program->attributeLocation("vertexNormal");
+        vertexColor = program->attributeLocation("vertexColor");
     }
 
+    void initializeShaders(){
 
-    void init() {
+        delete program;
+        program = new QOpenGLShaderProgram(this);
+        std::string path = "shaders/";
+        std::string vShaderPath = path + "mainShader.vertex";
+        std::string fShaderPath = path + "mainShader.fragment";
+
+        if (!program->addShaderFromSourceFile(QOpenGLShader::Vertex, vShaderPath.c_str())){
+            qWarning() << "Erreur de compilation du vertex shader :" << program->log();
+        }
+        if (!program->addShaderFromSourceFile(QOpenGLShader::Fragment, fShaderPath.c_str())){
+            qWarning() << "Erreur de compilation du fragment shader :" << program->log();
+        }
+
+        if (!program->link()){
+            qWarning() << "Erreur de lors de la liaison des shaders :" << program->log();
+        }
+    }
+
+    void init() override {
         makeCurrent();
-        initializeOpenGLFunctions();
         initializeGL();
 
         setMouseTracking(true);// Needed for MouseGrabber.
@@ -149,6 +159,8 @@ public :
         setSceneCenter( qglviewer::Vec( 0 , 0 , 0 ) );
         setSceneRadius( 10.f );
         showEntireScene();
+
+        mesh.initVAO(program);
     }
 
     QString helpString() const {
@@ -241,6 +253,7 @@ public slots:
                 }
                 adjustCamera(bb,BB);
                 update();
+                mesh.initVAO(program);
             }
             else
                 std::cout << fileName.toStdString() << " could not be opened" << std::endl;
