@@ -48,32 +48,64 @@ void Grid::setObject(TileInstance object,int x,int y,int z){
 
 }
 
-void Grid::initializeBuffers() {//tous les buffers dans grid pour en avoir qu'un seul et un seul appel a l'affichage? 0 sommet 1 noramle 2 texture 3 4 5 6 matrice transfo
+void Grid::initializeBuffers() {
     initializeOpenGLFunctions();
-    glBindBuffer(GL_ARRAY_BUFFER, matrixVBO);
-    glBufferData(GL_ARRAY_BUFFER, modelMatrixes.size() * sizeof(QMatrix4x4), modelMatrixes.data(), GL_STATIC_DRAW);
-    for (unsigned int i = 0; i < 4; i++) {
-        glEnableVertexAttribArray(3 + i);
-        glVertexAttribPointer(3 + i, 4, GL_FLOAT, GL_FALSE, 4*sizeof(QVector4D),(void*)(i * sizeof(QVector4D)));
-        glVertexAttribDivisor(3 + i, 1);
+    size_t totalMatrices = 0;
+    for (const auto& matrices : modelMatrixes) {
+        totalMatrices += matrices.size();
     }
-    glBindVertexArray(0);
+    glGenBuffers(1, &matrixVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, matrixVBO);
+    glBufferData(GL_ARRAY_BUFFER, totalMatrices * sizeof(QMatrix4x4), nullptr, GL_STATIC_DRAW);
+    size_t offset = 0;
+    for (unsigned int i = 0; i < modelMatrixes.size(); ++i) {
+        const auto& matrices = modelMatrixes[i];
+        size_t size = matrices.size() * sizeof(QMatrix4x4);
+        glBufferSubData(GL_ARRAY_BUFFER, offset, size, matrices.data());
+        offset += size;
+    }
+    for (unsigned int i = 0; i < modelPos.size(); ++i) {
+        if (!modelPos[i].empty()) {
+            QOpenGLVertexArrayObject* VAO = modeles[i].mesh().VAO;
+            VAO->bind();
+            for (unsigned int k = 0; k < 4; ++k) {
+                glEnableVertexAttribArray(3 + k);
+                glVertexAttribPointer(3 + k, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(k * sizeof(QVector4D)));
+                glVertexAttribDivisor(3 + k, 1);
+            }
+            VAO->release();
+        }
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Grid::render(GLuint program){
-    for(int i = 0;i<modelPos.size();i++){
-        for(int j = 0 ; j<modelPos[i].size();j++){
-            Cell cell = this->getCell(modelPos[i][j].x(),modelPos[i][j].y(),modelPos[i][j].z());
-            if(cell.hasMesh){
-                QMatrix4x4 modelMatrix = modelMatrixes[i][j];
-                GLuint modelMatrixLocation = glGetUniformLocation(program, "modelMatrix");//Au final revoir pour version instanciée comme sur le learnopengl
-                if (modelMatrixLocation != -1) {
-                    glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, modelMatrix.data());
-                }
-                //draw
-                cell.object.tileModel()->mesh().initVAO(program);
-                //cell.object.tileModel()->mesh().render();
+
+void Grid::render(GLuint program) {
+    glUseProgram(program);
+    for (unsigned int i = 0; i < modelPos.size(); ++i) {
+        int numInstances = modelPos[i].size();
+        if (numInstances > 0) {
+            modeles[i].mesh().VAO->bind();
+            glBindBuffer(GL_ARRAY_BUFFER, matrixVBO);
+            for (unsigned int k = 0; k < 4; ++k) {
+                glEnableVertexAttribArray(3 + k);
+                glVertexAttribPointer(3 + k, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(k * sizeof(QVector4D)));
+                glVertexAttribDivisor(3 + k, 1);
             }
+            glDrawElementsInstanced(
+                GL_TRIANGLES,
+                modeles[i].mesh().triangles.size(),
+                GL_UNSIGNED_INT,
+                0,
+                numInstances
+                );
+            glBindVertexArray(0);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
         }
     }
 }
+
+void Grid::setModeles(QVector<TileModel> modeles){
+    this->modeles=modeles;
+}
+

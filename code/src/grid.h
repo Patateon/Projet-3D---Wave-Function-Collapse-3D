@@ -25,6 +25,8 @@ public:
     uint getCellIndex(int x, int y, int z) const;
     void initializeBuffers();
     void render(GLuint program);
+    void setModeles(QVector<TileModel> modeles);
+
 
 private:
     QVector3D BBmin;
@@ -39,6 +41,7 @@ private:
     QVector<QVector<QVector3D>> modelPos;
     QVector<QVector<QMatrix4x4>> modelMatrixes;
     GLuint matrixVBO;
+    QVector<TileModel> modeles;//Charger les modeles a mettre dans le MyViewer?
 };
 
 #endif // GRID_H
