@@ -28,6 +28,7 @@
 #include <QOpenGLShaderProgram>
 
 #include "qt/QSmartAction.h"
+#include "grid.h"
 
 
 class MyViewer : public QGLViewer , public QOpenGLFunctions_4_3_Core
@@ -35,6 +36,7 @@ class MyViewer : public QGLViewer , public QOpenGLFunctions_4_3_Core
     Q_OBJECT
 
     Mesh mesh;
+    Grid * grid;
 
     QOpenGLShaderProgram *program = nullptr;
 
@@ -75,10 +77,30 @@ public :
     }
 
     void draw() override {
-        program->bind();
+        QMatrix4x4 viewMatrix;
+        QMatrix4x4 projectionMatrix;
 
-        glEnable(GL_DEPTH_TEST);
-        mesh.render(program);
+        camera()->getModelViewMatrix(viewMatrix.data());
+        camera()->getProjectionMatrix(projectionMatrix.data());
+
+        QMatrix4x4 model = QMatrix4x4();
+        QMatrix4x4 viewProjection = projectionMatrix * viewMatrix; // OpenGL : Projection * View
+
+        program->bind();
+        program->setUniformValue("viewProjMatrix", viewProjection);
+
+        // Test Render: A simple triangle
+        glBegin(GL_TRIANGLES);
+        glColor3f(1.0f, 0.0f, 0.0f); glVertex3f(-0.5f, -0.5f, 0.0f);
+        glColor3f(0.0f, 1.0f, 0.0f); glVertex3f( 0.5f, -0.5f, 0.0f);
+        glColor3f(0.0f, 0.0f, 1.0f); glVertex3f( 0.0f,  0.5f, 0.0f);
+        glEnd();
+
+//        program->release();
+//        program->bind();
+
+//        glEnable(GL_DEPTH_TEST);
+//        grid->render(program);
 
         program->release();
     }
@@ -98,7 +120,58 @@ public :
         showEntireScene();
     }
 
-    void initializeGL() override{
+    void initializeModels(){
+
+
+
+    }
+
+    void initialiazeGrid(){
+        QString modelPath = QString("/home/e20200008252/Cours/Master-Imagine/M2/S9/Dev-Interactives/TP4/models/sphere.off");
+        TileModel model1 = TileModel(0, modelPath);
+        TileModel model2 = TileModel(1, modelPath);
+        TileModel model3 = TileModel(2, modelPath);
+
+        model1.mesh().initVAO(program);
+        model2.mesh().initVAO(program);
+        model3.mesh().initVAO(program);
+
+        QVector<TileModel> modeles;
+        modeles.append(model1);
+        modeles.append(model2);
+        modeles.append(model3);
+
+        TileInstance i0 = TileInstance(&model1);
+        TileInstance i1 = TileInstance(&model1);
+        TileInstance i2 = TileInstance(&model1);
+
+        TileInstance i3 = TileInstance(&model2);
+        TileInstance i4 = TileInstance(&model2);
+        TileInstance i5 = TileInstance(&model2);
+
+        TileInstance i6 = TileInstance(&model3);
+        TileInstance i7 = TileInstance(&model3);
+        TileInstance i8 = TileInstance(&model3);
+
+        grid = new Grid(3, 3, 3, 0.5, 0.5, 0.5, QVector3D(-0.75, -0.75, -0.75), 3);
+        grid->setModeles(modeles);
+
+        for(int i = 0; i < 3; i++){
+            grid->setObject(i0, 0, 0, i);
+            grid->setObject(i1, 0, 1, i);
+            grid->setObject(i2, 0, 2, i);
+            grid->setObject(i3, 1, 0, i);
+            grid->setObject(i4, 1, 1, i);
+            grid->setObject(i5, 1, 2, i);
+            grid->setObject(i6, 2, 0, i);
+            grid->setObject(i7, 2, 1, i);
+            grid->setObject(i8, 2, 2, i);
+        }
+
+        grid->initializeBuffers(program);
+    }
+
+    void initializeProgramShader() {
         initializeOpenGLFunctions();
 
         initializeShaders();
@@ -113,9 +186,10 @@ public :
         delete program;
         program = new QOpenGLShaderProgram(this);
         std::string path = "shaders/";
-        std::string vShaderPath = path + "mainShader.vertex";
-        std::string fShaderPath = path + "mainShader.fragment";
-
+        std::string vShaderPath = path + "vshader.glsl";
+        std::string fShaderPath = path + "fshader.glsl";
+        qDebug() << "Vertex Shader Path:" << QString::fromStdString(vShaderPath);
+        qDebug() << "Fragment Shader Path:" << QString::fromStdString(fShaderPath);
         if (!program->addShaderFromSourceFile(QOpenGLShader::Vertex, vShaderPath.c_str())){
             qWarning() << "Erreur de compilation du vertex shader :" << program->log();
         }
@@ -130,7 +204,7 @@ public :
 
     void init() override {
         makeCurrent();
-        initializeGL();
+        initializeProgramShader();
 
         setMouseTracking(true);// Needed for MouseGrabber.
 
@@ -158,9 +232,10 @@ public :
         //
         setSceneCenter( qglviewer::Vec( 0 , 0 , 0 ) );
         setSceneRadius( 10.f );
+        initialiazeGrid();
+
         showEntireScene();
 
-        mesh.initVAO(program);
     }
 
     QString helpString() const {

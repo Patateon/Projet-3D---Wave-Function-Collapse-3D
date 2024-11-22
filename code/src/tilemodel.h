@@ -21,6 +21,8 @@ public:
     void setMesh(QString filename);
 
     uint getId();
+
+    bool operator<(const TileModel & other) const;
 private:
     uint m_id;
     Mesh m_mesh;

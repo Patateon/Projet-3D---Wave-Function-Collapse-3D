@@ -6,22 +6,22 @@ Cell::Cell() :  hasMesh(false),object(nullptr){}
 Grid::Grid() : resX(0), resY(0), resZ(0) {}
 
 
-Grid::Grid(int X, int Y, int Z,int dimX,int dimY,int dimZ,QVector3D bbMin,int nModel) {
+Grid::Grid(int X, int Y, int Z, float dim_x, float dim_y, float dim_z,QVector3D bbMin,int nModel) {
     cells = std::vector<Cell>(X * Y * Z);
     resX = X;
     resY = Y;
     resZ = Z;
-    dimX=dimX;
-    dimY=dimY;
-    dimZ=dimZ;
-    BBmin=bbMin;
+    dimX = dim_x;
+    dimY = dim_y;
+    dimZ = dim_z;
+    BBmin = bbMin;
     modelPos.resize(nModel); //redimensionner selon nModel
     for (int i = 0; i < nModel; ++i) {
-        modelPos[i].resize(0);  //Ini vecteur vide
+        modelPos[i].clear();  //Ini vecteur vide
     }
     modelMatrixes.resize(nModel);
     for (int i = 0; i < nModel; ++i) {
-        modelMatrixes[i].resize(0);
+        modelMatrixes[i].clear();
     }
 }
 
@@ -37,7 +37,7 @@ uint Grid::getCellIndex(int x, int y, int z) const {
 
 void Grid::setObject(TileInstance object,int x,int y,int z){
     Cell& cell = getCell(x,y,z);
-    cell.object=object;
+    cell.object = object;
     cell.hasMesh = true;
     int id = cell.object.tileModel()->getId();
     modelPos[id].push_back(QVector3D(x,y,z));
@@ -48,8 +48,11 @@ void Grid::setObject(TileInstance object,int x,int y,int z){
 
 }
 
-void Grid::initializeBuffers() {
+void Grid::initializeBuffers(QOpenGLShaderProgram* program) {
     initializeOpenGLFunctions();
+
+    program->bind();
+
     size_t totalMatrices = 0;
     for (const auto& matrices : modelMatrixes) {
         totalMatrices += matrices.size();
@@ -70,18 +73,24 @@ void Grid::initializeBuffers() {
             VAO->bind();
             for (unsigned int k = 0; k < 4; ++k) {
                 glEnableVertexAttribArray(3 + k);
-                glVertexAttribPointer(3 + k, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(k * sizeof(QVector4D)));
+                glVertexAttribPointer(3 + k, 4,
+                                      GL_FLOAT,
+                                      GL_FALSE,
+                                      sizeof(QMatrix4x4),
+                                      (void*)(k * sizeof(QVector4D)));
                 glVertexAttribDivisor(3 + k, 1);
             }
             VAO->release();
         }
     }
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    program->release();
 }
 
 
-void Grid::render(GLuint program) {
-    glUseProgram(program);
+void Grid::render(QOpenGLShaderProgram* program) {
+    program->bind();
+
     for (int i = 0; i < modelPos.size(); ++i) {
         int numInstances = modelPos[i].size();
         if (numInstances > 0) {
@@ -89,7 +98,11 @@ void Grid::render(GLuint program) {
             glBindBuffer(GL_ARRAY_BUFFER, matrixVBO);
             for (unsigned int k = 0; k < 4; ++k) {
                 glEnableVertexAttribArray(3 + k);
-                glVertexAttribPointer(3 + k, 4, GL_FLOAT, GL_FALSE, sizeof(QMatrix4x4), (void*)(k * sizeof(QVector4D)));
+                glVertexAttribPointer(3 + k, 4,
+                                      GL_FLOAT,
+                                      GL_FALSE,
+                                      sizeof(QMatrix4x4),
+                                      (void*)(k * sizeof(QVector4D)));
                 glVertexAttribDivisor(3 + k, 1);
             }
             glDrawElementsInstanced(
@@ -103,6 +116,7 @@ void Grid::render(GLuint program) {
             glBindBuffer(GL_ARRAY_BUFFER, 0);
         }
     }
+    program->release();
 }
 
 void Grid::setModeles(QVector<TileModel> modeles){

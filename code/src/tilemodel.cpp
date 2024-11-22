@@ -33,3 +33,7 @@ void TileModel::setMesh(QString filename)
 uint TileModel::getId(){
     return m_id;
 }
+
+bool TileModel::operator<(const TileModel & other) const{
+    return m_id < other.m_id;
+}
