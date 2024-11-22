@@ -58,15 +58,15 @@ void Grid::initializeBuffers() {
     glBindBuffer(GL_ARRAY_BUFFER, matrixVBO);
     glBufferData(GL_ARRAY_BUFFER, totalMatrices * sizeof(QMatrix4x4), nullptr, GL_STATIC_DRAW);
     size_t offset = 0;
-    for (unsigned int i = 0; i < modelMatrixes.size(); ++i) {
+    for (int i = 0; i < modelMatrixes.size(); ++i) {
         const auto& matrices = modelMatrixes[i];
         size_t size = matrices.size() * sizeof(QMatrix4x4);
         glBufferSubData(GL_ARRAY_BUFFER, offset, size, matrices.data());
         offset += size;
     }
-    for (unsigned int i = 0; i < modelPos.size(); ++i) {
+    for (int i = 0; i < modelPos.size(); ++i) {
         if (!modelPos[i].empty()) {
-            QOpenGLVertexArrayObject* VAO = modeles[i].mesh().VAO;
+            QOpenGLVertexArrayObject* VAO = modeles[i].mesh().vao;
             VAO->bind();
             for (unsigned int k = 0; k < 4; ++k) {
                 glEnableVertexAttribArray(3 + k);
@@ -82,10 +82,10 @@ void Grid::initializeBuffers() {
 
 void Grid::render(GLuint program) {
     glUseProgram(program);
-    for (unsigned int i = 0; i < modelPos.size(); ++i) {
+    for (int i = 0; i < modelPos.size(); ++i) {
         int numInstances = modelPos[i].size();
         if (numInstances > 0) {
-            modeles[i].mesh().VAO->bind();
+            modeles[i].mesh().vao->bind();
             glBindBuffer(GL_ARRAY_BUFFER, matrixVBO);
             for (unsigned int k = 0; k < 4; ++k) {
                 glEnableVertexAttribArray(3 + k);
