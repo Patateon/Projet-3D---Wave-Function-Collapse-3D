@@ -28,7 +28,7 @@ SOURCES += ./src/main.cpp \
     ./src/grid.cpp \
     src/transform.cpp
 
-
+RESOURCES += shaders/
 
 
 EXT_DIR = extern
