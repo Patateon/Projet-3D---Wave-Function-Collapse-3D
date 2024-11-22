@@ -24,6 +24,7 @@ public:
 private:
     uint m_id;
     Mesh m_mesh;
+    QVector<bool> rules;
 };
 
 #endif // TILEMODEL_H

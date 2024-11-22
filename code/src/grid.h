@@ -6,6 +6,7 @@
 #include <QOpenGLShaderProgram>
 #include <vector>
 #include <tileinstance.h>
+#include <wfc.h>
 
 struct Cell {
     bool hasMesh;
@@ -26,6 +27,10 @@ public:
     void initializeBuffers();
     void render(GLuint program);
     void setModeles(QVector<TileModel> modeles);
+
+    int getX() {return resX;}
+    int getY() {return resY;}
+    int getZ() {return resZ;}
 
 
 private:

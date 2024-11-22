@@ -19,14 +19,16 @@ HEADERS += ./src/point3.h \
     ./src/tilemodel.h \
     src/tileinstance.h \
     src/transform.h \
-    ./src/grid.h
+    ./src/grid.h \
+    src/wfc.h
 SOURCES += ./src/main.cpp \
     ./src/gl/GLUtilityMethods.cpp\
     ./src/gl/BasicColors.cpp \
     ./src/tilemodel.cpp \
     src/tileinstance.cpp \
     ./src/grid.cpp \
-    src/transform.cpp
+    src/transform.cpp \
+    src/wfc.cpp
 
 RESOURCES += shaders/
 
