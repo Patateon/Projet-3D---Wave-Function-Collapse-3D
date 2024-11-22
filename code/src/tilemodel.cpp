@@ -29,3 +29,7 @@ void TileModel::setMesh(QString filename)
                                      m_mesh.triangles);
     }
 }
+
+uint TileModel::getId(){
+    return m_id;
+}
