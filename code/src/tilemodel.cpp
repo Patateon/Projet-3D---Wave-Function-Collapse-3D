@@ -33,3 +33,7 @@ void TileModel::setMesh(QString filename)
 uint TileModel::getId(){
     return m_id;
 }
+
+QSet<int> TileModel::getRules(){
+    return m_rules;
+}

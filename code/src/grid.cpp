@@ -66,7 +66,7 @@ void Grid::initializeBuffers() {
     }
     for (unsigned int i = 0; i < modelPos.size(); ++i) {
         if (!modelPos[i].empty()) {
-            QOpenGLVertexArrayObject* VAO = modeles[i].mesh().VAO;
+            QOpenGLVertexArrayObject* VAO = modeles[i].mesh().vao;
             VAO->bind();
             for (unsigned int k = 0; k < 4; ++k) {
                 glEnableVertexAttribArray(3 + k);
@@ -85,7 +85,7 @@ void Grid::render(GLuint program) {
     for (unsigned int i = 0; i < modelPos.size(); ++i) {
         int numInstances = modelPos[i].size();
         if (numInstances > 0) {
-            modeles[i].mesh().VAO->bind();
+            modeles[i].mesh().vao->bind();
             glBindBuffer(GL_ARRAY_BUFFER, matrixVBO);
             for (unsigned int k = 0; k < 4; ++k) {
                 glEnableVertexAttribArray(3 + k);

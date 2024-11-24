@@ -6,7 +6,6 @@
 #include <QOpenGLShaderProgram>
 #include <vector>
 #include <tileinstance.h>
-#include <wfc.h>
 
 struct Cell {
     bool hasMesh;

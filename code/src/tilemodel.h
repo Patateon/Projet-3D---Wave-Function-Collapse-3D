@@ -21,10 +21,11 @@ public:
     void setMesh(QString filename);
 
     uint getId();
+    QSet<int> getRules();
 private:
     uint m_id;
     Mesh m_mesh;
-    QVector<bool> rules;
+    QSet<int> m_rules;//Contient les indices de modele autorisé dans les cellules adjacentes
 };
 
 #endif // TILEMODEL_H

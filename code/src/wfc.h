@@ -1,14 +1,16 @@
 #ifndef WFC_H
 #define WFC_H
 #include <grid.h>
+#include <QVector>
 
-
-class wfc
+class Wfc
 {
 public:
-    wfc(Grid& grid);
-    runWFC(Grid& grid,int k,QVector<TileModel> &modeles);
-    initWFC(int k,QVector<TileModel> &modeles);
+    Wfc();
+    Wfc(Grid& grid);
+    void runWFC(Grid& grid,int k,QVector<TileModel> &modeles);
+    void initWFC(int k,QVector<TileModel> &modeles);
+    bool ruleCheck(QVector<QSet<int>> voisins,int id_center);
 private:
     Grid& m_grid;
 };

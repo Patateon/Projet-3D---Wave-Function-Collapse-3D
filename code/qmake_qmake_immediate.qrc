@@ -1,6 +1,6 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource prefix="/">
-<file alias="shaders/mainShader.fragment">/home/patateon/Projects/Wave-Function-Collapse-3D/code/shaders/mainShader.fragment</file>
-<file alias="shaders/mainShader.vertex">/home/patateon/Projects/Wave-Function-Collapse-3D/code/shaders/mainShader.vertex</file>
+<file alias="shaders/mainShader.fragment">/home/thomas/Bureau/Projet3D/Wave-Function-Collapse-3D/code/shaders/mainShader.fragment</file>
+<file alias="shaders/mainShader.vertex">/home/thomas/Bureau/Projet3D/Wave-Function-Collapse-3D/code/shaders/mainShader.vertex</file>
 </qresource>
 </RCC>
