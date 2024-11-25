@@ -30,7 +30,11 @@ struct Mesh{
 
     void initVAO(QOpenGLShaderProgram* program) {
 
+        qDebug() << vertices.size();
+        qDebug() << triangles.size();
+
         if (vertices.empty() || triangles.empty()){
+            qDebug() << "No vertices or triangles!";
             return;
         }
 
@@ -39,12 +43,14 @@ struct Mesh{
         vao = new QOpenGLVertexArrayObject();
         if (!vao->create()){
             program->release();
+            qDebug() << "Could not create VAO!";
             return;
         }
         vao->bind();
 
         vbo_vertex = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
         if (!vbo_vertex->create()){
+            qDebug() << "Could not create vertex VBO!";
             program->release();
             return;
         }
@@ -54,12 +60,16 @@ struct Mesh{
 
         vbo_triangles = new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
         if (!vbo_triangles->create()){
+            qDebug() << "Could not create triangles VBO!";
             program->release();
             return;
         }
         vbo_triangles->bind();
         vbo_triangles->setUsagePattern(QOpenGLBuffer::StaticDraw);
         vbo_triangles->allocate(triangles.data(), triangles.size() * 3 * sizeof(uint));
+
+        program->enableAttributeArray(0);
+        program->setAttributeBuffer(0, GL_DOUBLE, offsetof(Vertex, p), 3, sizeof(Vertex));
 
         vao->release();
         program->release();

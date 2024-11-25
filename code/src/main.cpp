@@ -2,7 +2,7 @@
 #include <QApplication>
 #include <QMainWindow>
 #include <QToolBar>
-#include "MyViewer.h"
+#include "mainviewer.h"
 #include "grid.h"
 
 
@@ -11,7 +11,7 @@ int main( int argc , char** argv )
 {
     QApplication app( argc , argv );
 
-    MyViewer * viewer = new MyViewer;
+    MainViewer * viewer = new MainViewer;
 
     QMainWindow * mainWindow = new QMainWindow;
     QToolBar * toolBar = new QToolBar;
