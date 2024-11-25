@@ -10,6 +10,7 @@ public:
     // Constructor/Desctructor
     TileModel(uint id);
     TileModel(uint id, QString filename);
+    TileModel(uint id, QSet<int> rules);
     ~TileModel();
 
     // Getter/Setter
@@ -20,8 +21,9 @@ public:
     void setMesh(Mesh *mesh) {m_mesh = *mesh;}
     void setMesh(QString filename);
 
-    uint getId();
+    uint getId()const;
     QSet<int> getRules();
+    void setRules(QSet<int> rules);
 private:
     uint m_id;
     Mesh m_mesh;

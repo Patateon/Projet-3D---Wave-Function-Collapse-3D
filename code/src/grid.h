@@ -26,6 +26,7 @@ public:
     void initializeBuffers();
     void render(GLuint program);
     void setModeles(QVector<TileModel> modeles);
+    void printGrid() ;
 
     int getX() {return resX;}
     int getY() {return resY;}
