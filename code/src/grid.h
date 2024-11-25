@@ -10,7 +10,7 @@
 struct Cell {
     bool hasMesh;
     TileInstance object;
-
+    int entropy=0;
     Cell();
 };
 

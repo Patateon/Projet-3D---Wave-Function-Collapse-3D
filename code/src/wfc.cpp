@@ -4,10 +4,7 @@
 
 Wfc::Wfc(Grid& grid) : m_grid(grid) {}
 
-void Wfc::runWFC(Grid& grid,int k,QVector<TileModel> &modeles){
-    initWFC(k,modeles);
 
-}
 
 //Fonction pour utiliser un QVector3D comme clé dans un QSet
 inline uint qHash(const QVector3D &vector, uint seed = 0) {
@@ -22,6 +19,16 @@ void removeElementFromVector(QVector<QVector3D>& vec, const QVector3D& toRemove)
     }
 }
 
+bool Wfc::ruleCheck(QVector<QSet<int>> voisins,int id_center){
+    bool ruleBroken=false;
+    for(int i=0;i<voisins.size();i++){
+        if(!voisins[i].contains(id_center)){
+            ruleBroken=true;
+            break;
+        }
+    }
+    return !ruleBroken;
+}
 void Wfc::initWFC(int k,QVector<TileModel> &modeles){
     if(k>=(m_grid.getX()*m_grid.getY()*m_grid.getZ())){
         std::cout<<"Taille de la grille : "<<m_grid.getX()*m_grid.getY()*m_grid.getZ()<<" k trop grand"<<std::endl;
@@ -39,7 +46,6 @@ void Wfc::initWFC(int k,QVector<TileModel> &modeles){
     int id;
     bool ruleBroken = false;
     QSet<QVector3D> cellsDone;
-
     for(int i = 0 ; i<k;i++){
         objectSet=false;
         while(!objectSet){
@@ -84,7 +90,9 @@ void Wfc::initWFC(int k,QVector<TileModel> &modeles){
                         TileInstance instance(&modeles[randomModel], Transform());
                         m_grid.setObject(instance,randomX,randomY,randomZ);
                         m_grid.getCell(randomX,randomY,randomZ).hasMesh=true;
-                        m_grid.getCell(randomX,randomY,randomZ).object.test=randomModel;
+                        for(int j=0;j<voisins.size();j++){
+                            m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).entropy++;
+                        }
                         std::cout<<"Une instance est mise car pas de regle autour"<<std::endl;
 
                     }
@@ -107,7 +115,9 @@ void Wfc::initWFC(int k,QVector<TileModel> &modeles){
                                 TileInstance instance(&modeles[randomModel], Transform());
                                 m_grid.setObject(instance,randomX,randomY,randomZ);
                                 m_grid.getCell(randomX,randomY,randomZ).hasMesh=true;
-                                m_grid.getCell(randomX,randomY,randomZ).object.test=randomModel;
+                                for(int j=0;j<voisins.size();j++){
+                                    m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).entropy++;
+                                }
                                 std::cout<<"Une instance est mise apres check regle"<<std::endl;
                             }
                         }
@@ -124,14 +134,42 @@ void Wfc::initWFC(int k,QVector<TileModel> &modeles){
     }
 }
 
-bool Wfc::ruleCheck(QVector<QSet<int>> voisins,int id_center){
-    bool ruleBroken=false;
-    for(int i=0;i<voisins.size();i++){
-        if(!voisins[i].contains(id_center)){
-            ruleBroken=true;
-            break;
+void Wfc::runWFC(Grid& grid,int k,QVector<TileModel> &modeles){
+    initWFC(k,modeles);
+    bool isFull=false;
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    while(!isFull){
+        isFull=true;
+        //Parcours grille pour meilleure entropie
+        int maxEntropy=-1;
+        QVector<QVector3D> bestEntropy;
+        for(int x = 0;x<m_grid.getX();x++){
+            for(int y = 0;y<m_grid.getY();y++){
+                for(int z = 0;z<m_grid.getZ();z++){
+                    if(m_grid.getCell(x,y,z).entropy>maxEntropy&&!m_grid.getCell(x,y,z).hasMesh){
+                        maxEntropy=m_grid.getCell(x,y,z).entropy;
+                    }
+                }
+            }
         }
+        for(int x = 0;x<m_grid.getX();x++){
+            for(int y = 0;y<m_grid.getY();y++){
+                for(int z = 0;z<m_grid.getZ();z++){
+                    if(m_grid.getCell(x,y,z).entropy==maxEntropy){
+                        bestEntropy.push_back(QVector3D(x,y,z));
+                    }
+                }
+            }
+        }
+        std::uniform_int_distribution<> disEntropy(0,bestEntropy.size());
+        int randomPossibility=disEntropy(gen);
+        //On a la cellule dans laquelle on va essayer de mettre un modele
+        Cell& cell = getCell(bestEntropy[randomPossibility].x(),bestEntropy[randomPossibility].y(),bestEntropy[randomPossibility].z());
+
     }
-    return !ruleBroken;
+
 }
+
+
 
