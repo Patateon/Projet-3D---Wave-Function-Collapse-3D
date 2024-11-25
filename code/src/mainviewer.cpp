@@ -47,11 +47,13 @@ void MainViewer::initializeModels() {
 
 }
 
-void MainViewer::initialiazeGrid(){
-    QString modelPath = QString("/home/e20200008252/Cours/Master-Imagine/M2/S9/Dev-Interactives/TP4/models/sphere.off");
-    TileModel model1 = TileModel(0, modelPath);
-    TileModel model2 = TileModel(1, modelPath);
-    TileModel model3 = TileModel(2, modelPath);
+void MainViewer::initializeGrid(){
+    QString modelPath1 = QString("models/sphere.off");
+    QString modelPath2 = QString("models/arma.off");
+    QString modelPath3 = QString("models/monkey.off");
+    TileModel model1 = TileModel(0, modelPath1);
+    TileModel model2 = TileModel(1, modelPath3);
+    TileModel model3 = TileModel(2, modelPath3);
 
     model1.mesh().initVAO(program);
     model2.mesh().initVAO(program);
@@ -65,30 +67,85 @@ void MainViewer::initialiazeGrid(){
     TileInstance i0 = TileInstance(&model1);
     TileInstance i1 = TileInstance(&model1);
     TileInstance i2 = TileInstance(&model1);
+    TileInstance i3 = TileInstance(&model1);
 
-    TileInstance i3 = TileInstance(&model2);
     TileInstance i4 = TileInstance(&model2);
     TileInstance i5 = TileInstance(&model2);
+    TileInstance i6 = TileInstance(&model2);
+    TileInstance i7 = TileInstance(&model2);
 
-    TileInstance i6 = TileInstance(&model3);
-    TileInstance i7 = TileInstance(&model3);
     TileInstance i8 = TileInstance(&model3);
+    TileInstance i9 = TileInstance(&model3);
+    TileInstance i10 = TileInstance(&model3);
+    TileInstance i11 = TileInstance(&model3);
 
     float spacing = 1.5;
 
-    grid = new Grid(3, 3, 3, spacing, spacing, spacing, QVector3D(-0.75, -0.75, -0.75), 3);
+    grid = new Grid(4, 4, 4,
+                    spacing, spacing, spacing,
+                    QVector3D(), 3);
+
     grid->setModeles(modeles);
 
-    for(int i = 0; i < 3; i++){
+    for(int i = 0; i < 4; i++){
         grid->setObject(i0, 0, 0, i);
         grid->setObject(i1, 0, 1, i);
         grid->setObject(i2, 0, 2, i);
-        grid->setObject(i3, 1, 0, i);
-        grid->setObject(i4, 1, 1, i);
-        grid->setObject(i5, 1, 2, i);
-        grid->setObject(i6, 2, 0, i);
-        grid->setObject(i7, 2, 1, i);
-        grid->setObject(i8, 2, 2, i);
+        grid->setObject(i3, 0, 3, i);
+
+        grid->setObject(i4, 1, 0, i);
+        grid->setObject(i5, 1, 1, i);
+        grid->setObject(i6, 1, 2, i);
+        grid->setObject(i7, 1, 3, i);
+
+        grid->setObject(i8, 2, 0, i);
+        grid->setObject(i9, 2, 1, i);
+        grid->setObject(i10, 2, 2, i);
+        grid->setObject(i11, 2, 3, i);
+    }
+
+    grid->printGrid();
+
+    grid->initializeBuffers(program);
+}
+
+void MainViewer::initializeRandomGrid(uint dimension, float spacing) {
+
+    QString modelPath1 = QString("models/sphere.off");
+    QString modelPath2 = QString("models/arma.off");
+    QString modelPath3 = QString("models/monkey.off");
+
+    TileModel model1 = TileModel(0, modelPath1);
+    TileModel model2 = TileModel(1, modelPath3);
+    TileModel model3 = TileModel(2, modelPath3);
+    TileModel model4 = TileModel(3, modelPath1);
+
+    model1.mesh().initVAO(program);
+    model2.mesh().initVAO(program);
+    model3.mesh().initVAO(program);
+    model4.mesh().initVAO(program);
+
+    QVector<TileModel> modeles;
+    modeles.append(model1);
+    modeles.append(model2);
+    modeles.append(model3);
+    modeles.append(model4);
+
+
+    grid = new Grid(dimension, dimension, dimension,
+                    spacing, spacing, spacing,
+                    QVector3D(), 4);
+    grid->setModeles(modeles);
+
+    for (uint x = 0; x < dimension; x++){
+        for (uint y = 0; y < dimension; y++){
+            for (uint z = 0; z < dimension; z++){
+                int model = rand()%2;
+                qDebug() << model;
+                TileInstance instance = TileInstance(&modeles[model]);
+                grid->setObject(instance, x, y, z);
+            }
+        }
     }
 
     grid->initializeBuffers(program);
@@ -158,7 +215,8 @@ void MainViewer::init() {
     setSceneRadius( 10.f );
 
     //
-    initialiazeGrid();
+//    initializeGrid();
+    initializeRandomGrid(5, 2.0);
 
     showEntireScene();
 
@@ -176,6 +234,7 @@ void MainViewer::draw() {
     QMatrix4x4 model = QMatrix4x4();
     QMatrix4x4 viewProjection = projectionMatrix * viewMatrix; // OpenGL : Projection * View
 
+    drawAxis(5);
     program->bind();
     program->setUniformValue("viewProjMatrix", viewProjection);
 

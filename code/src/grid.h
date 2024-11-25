@@ -27,6 +27,7 @@ public:
     void render(QOpenGLShaderProgram* program);
     void setModeles(QVector<TileModel> modeles);
 
+    void printGrid();
 
 private:
     QVector3D BBmin;
@@ -40,7 +41,7 @@ private:
     float dimZ;
     QVector<QVector<QVector3D>> modelPos;
     QVector<QVector<QMatrix4x4>> modelMatrixes;
-    GLuint matrixVBO;
+    QVector<GLuint> matrixVBO;
 
     // TODO : Remplacer par un set
     QVector<TileModel> modeles;//Charger les modeles a mettre dans le MyViewer?

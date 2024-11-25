@@ -59,7 +59,8 @@ public :
     void adjustCamera( point3d const & bb , point3d const & BB );
 
     void initializeModels();
-    void initialiazeGrid();
+    void initializeGrid();
+    void initializeRandomGrid(uint dimension, float spacing);
     void initializeProgramShader();
     void initializeShaders();
 

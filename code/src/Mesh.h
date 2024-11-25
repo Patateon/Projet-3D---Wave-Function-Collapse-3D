@@ -30,9 +30,6 @@ struct Mesh{
 
     void initVAO(QOpenGLShaderProgram* program) {
 
-        qDebug() << vertices.size();
-        qDebug() << triangles.size();
-
         if (vertices.empty() || triangles.empty()){
             qDebug() << "No vertices or triangles!";
             return;
