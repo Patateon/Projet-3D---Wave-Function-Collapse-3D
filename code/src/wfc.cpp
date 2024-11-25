@@ -17,22 +17,8 @@ inline uint qHash(const QVector3D &vector, uint seed = 0) {
 void removeElementFromVector(QVector<QVector3D>& vec, const QVector3D& toRemove) {
     for(int i=0;i<3;i++){
         int index = vec.indexOf(toRemove);
-
-
-        if (index != -1) {
-
+        if (index != -1)
             vec.removeAt(index);
-            std::cout << "L'élément a été supprimé." << std::endl;
-        } else {
-            std::cout << "L'élément n'a pas été trouvé." << std::endl;
-        }
-
-
-
-    }
-    std::cout << "Contenu du QVector après suppression :" << std::endl;
-    for (const QVector3D& v : vec) {
-        std::cout << "QVector3D(" << v.x() << ", " << v.y() << ", " << v.z() << ")" << std::endl;
     }
 }
 
@@ -68,7 +54,6 @@ void Wfc::initWFC(int k,QVector<TileModel> &modeles){
                 int iterationModelCount=0;
                 QVector<QSet<int>> ruleSets;
                 //Check voisins pour les règles 6 connexité dans grille si possible
-
                 voisins.push_back(QVector3D(std::min(randomX+1,m_grid.getX()-1),randomY,randomZ));
                 voisins.push_back(QVector3D(std::max(randomX-1,0),randomY,randomZ));
                 voisins.push_back(QVector3D(randomX,std::min(randomY+1,m_grid.getY()-1),randomZ));
@@ -77,20 +62,12 @@ void Wfc::initWFC(int k,QVector<TileModel> &modeles){
                 voisins.push_back(QVector3D(randomX,randomY,std::max(randomZ-1,0)));
                 //recupération des règles des voisins
                 removeElementFromVector(voisins,QVector3D(randomX,randomY,randomZ));
-                std::cout<<m_grid.getCell(voisins[0].x(),voisins[0].y(),voisins[0].z()).hasMesh<<std::endl;
-                std::cout<<m_grid.getCell(voisins[0].x(),voisins[0].y(),voisins[0].z()).object.test<<std::endl;
 
                 for(int j=0;j<voisins.size();j++){
-                    std::cout<<voisins[j].x()<<" "<<voisins[j].y()<<" "<<voisins[j].z()<<std::endl;
-                    std::cout<<m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).hasMesh<<std::endl;
                     if(m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).hasMesh){
-                        std::cout<<"ajout de regle"<<std::endl;
-                        std::cout<<m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).object.test<<std::endl;
                         ruleSets.push_back(m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).object.tileModel()->getRules());
-                        std::cout<<"apres ajout de regle"<<std::endl;
                     }
                 }
-
                 while(!endModelChoice){
                     //Seuil d'arrêt si on est dans une situation qui ne résolve pas, on change de cellule
                     iterationModelCount++;

@@ -117,7 +117,7 @@ void Grid::printGrid()  {
                 const Cell& cell = getCell(x, y, z);
                 if (cell.hasMesh) {
                     std::cout << "Cell(" << x << ", " << y << ", " << z << ") hasMesh: " << cell.hasMesh
-                              << " mode: " << cell.object.test << std::endl;
+                              << " mode: " << cell.object.tileModel()->getId() << std::endl;
 
                 }
             }
