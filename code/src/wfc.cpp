@@ -41,12 +41,22 @@ void Wfc::initWFC(int k,QVector<TileModel> &modeles){
     if(k>=(m_grid.getX()*m_grid.getY()*m_grid.getZ())){
         std::cout<<"Taille de la grille : "<<m_grid.getX()*m_grid.getY()*m_grid.getZ()<<" k trop grand"<<std::endl;
     }
+    //Pondération de la selection aléatoire de modele par la taille de leur rules, i.e, le nombre de voisins possibles
+    //Augmente les chances de configuration initiale viable
+    int total = 0;
+    for ( auto& modele : modeles) {
+        total += modele.getRules().size();
+    }
+    std::vector<float> weights;
+    for ( auto& modele : modeles) {
+        weights.push_back(static_cast<float>(modele.getRules().size()) / total);
+    }
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> disX(0,m_grid.getX()-1);
     std::uniform_int_distribution<> disY(0,m_grid.getY()-1);
     std::uniform_int_distribution<> disZ(0,m_grid.getZ()-1);
-    std::uniform_int_distribution<> disModele(0,modeles.size()-1);
+    std::discrete_distribution<> disModele(weights.begin(), weights.end());
     int randomX,randomY,randomZ,randomModel;
     QSet<int> rules;
     bool objectSet=false;
