@@ -2,7 +2,7 @@
 #include <QApplication>
 #include <QMainWindow>
 #include <QToolBar>
-#include "MyViewer.h"
+#include "mainviewer.h"
 #include "grid.h"
 
 
@@ -11,7 +11,7 @@ int main( int argc , char** argv )
 {
     QApplication app( argc , argv );
 
-    MyViewer * viewer = new MyViewer;
+    MainViewer * viewer = new MainViewer;
 
     QMainWindow * mainWindow = new QMainWindow;
     QToolBar * toolBar = new QToolBar;
@@ -22,8 +22,6 @@ int main( int argc , char** argv )
     mainWindow->addToolBar(toolBar);
 
     mainWindow->setCentralWidget(viewer);
-
-    Grid grid(1,1,1,1,1,1,QVector3D(0,0,0),5);
 
     QObject::connect( viewer , SIGNAL(windowTitleUpdated(QString)) , mainWindow , SLOT(setWindowTitle(QString)) );
     viewer->updateTitle("Wave Function Collapse");
