@@ -59,96 +59,54 @@ void Grid::setObject(TileInstance object,int x,int y,int z){
 
     //On met a jour commme ca pour l'instant
     QMatrix4x4 matrix = cell.object.transform().getLocalModel();
-    modelMatrixes[id].push_back((matrix));
+    modelMatrixes[id].push_back(matrix);
 
 }
 
-//void Grid::initializeBuffers(QOpenGLShaderProgram* program) {
-//    initializeOpenGLFunctions();
-
-//    program->bind();
-
-//    size_t totalMatrices = 0;
-//    for (const auto& matrices : modelMatrixes) {
-//        totalMatrices += matrices.size();
-//    }
-//    glGenBuffers(1, &matrixVBO);
-//    glBindBuffer(GL_ARRAY_BUFFER, matrixVBO);
-//    glBufferData(GL_ARRAY_BUFFER,
-//                 totalMatrices * sizeof(QMatrix4x4),
-//                 nullptr,
-//                 GL_STATIC_DRAW);
-//    size_t offset = 0;
-//    for (int i = 0; i < modelMatrixes.size(); ++i) {
-//        const auto& matrices = modelMatrixes[i];
-//        size_t size = matrices.size() * sizeof(QMatrix4x4);
-//        glBufferSubData(GL_ARRAY_BUFFER, offset, size, matrices.data());
-//        offset += size;
-//    }
-//    for (int i = 0; i < modelPos.size(); ++i) {
-//        if (!modelPos[i].empty()) {
-//            QOpenGLVertexArrayObject* VAO = modeles[i].mesh().vao;
-//            VAO->bind();
-//            for (unsigned int k = 0; k < 4; ++k) {
-//                glEnableVertexAttribArray(3 + k);
-//                glVertexAttribPointer(3 + k, 4,
-//                                      GL_FLOAT,
-//                                      GL_FALSE,
-//                                      sizeof(QMatrix4x4),
-//                                      (void*)(k * sizeof(QVector4D)));
-//                glVertexAttribDivisor(3 + k, 1);
-//            }
-//            VAO->release();
-//        }
-//    }
-//    glBindBuffer(GL_ARRAY_BUFFER, 0);
-//    program->release();
-//}
 
 void Grid::initializeBuffers(QOpenGLShaderProgram* program) {
+
+    if (modelPos.size() != modelMatrixes.size()) {
+        qDebug() << "Error: modelPos and modelMatrixes size mismatch!";
+        return;
+    }
+
     initializeOpenGLFunctions();
     program->bind();
 
-    std::vector<GLuint> matrixVBO(modelPos.size(), 0);
+    matrixVBO.clear();
+    matrixVBO = QVector<GLuint>(modelPos.size(), 0);
 
     for(int i = 0; i < modelPos.size(); i++){
         if (modelPos[i].empty()){
             continue;
         }
 
-        size_t totalMatrices = 0;
-        for (const auto& matrices : modelMatrixes) {
-            totalMatrices += matrices.size();
-        }
+        const auto& currentMatrix = modelMatrixes[i];
 
         glGenBuffers(1, &matrixVBO[i]);
+
         glBindBuffer(GL_ARRAY_BUFFER, matrixVBO[i]);
         glBufferData(GL_ARRAY_BUFFER,
-                     totalMatrices * sizeof(QMatrix4x4),
-                     nullptr,
+                     currentMatrix.size() * sizeof(QMatrix4x4),
+                     currentMatrix.data(),
                      GL_STATIC_DRAW);
 
-        size_t offset = 0;
-        for (int i = 0; i < modelMatrixes.size(); ++i) {
-            const auto& matrices = modelMatrixes[i];
-            size_t size = matrices.size() * sizeof(QMatrix4x4);
-            glBufferSubData(GL_ARRAY_BUFFER, offset, size, matrices.data());
-            offset += size;
-        }
-
-
         QOpenGLVertexArrayObject* VAO = modeles[i].mesh().vao;
-        VAO->bind();
-        for (unsigned int k = 0; k < 4; ++k) {
-            glEnableVertexAttribArray(3 + k);
-            glVertexAttribPointer(3 + k, 4,
-                                  GL_FLOAT,
-                                  GL_FALSE,
-                                  sizeof(QMatrix4x4),
-                                  (void*)(k * sizeof(QVector4D)));
-            glVertexAttribDivisor(3 + k, 1);
+        if (VAO && VAO->isCreated()){
+            VAO->bind();
+            for (unsigned int k = 0; k < 4; ++k) {
+                glEnableVertexAttribArray(3 + k);
+                glVertexAttribPointer(3 + k, 4,
+                                      GL_FLOAT,
+                                      GL_FALSE,
+                                      sizeof(QMatrix4x4),
+                                      (void*)(k * sizeof(QVector4D)));
+                glVertexAttribDivisor(3 + k, 1);
+            }
+
+            VAO->release();
         }
-        VAO->release();
 
     }
 
@@ -161,21 +119,16 @@ void Grid::render(QOpenGLShaderProgram* program) {
     program->bind();
 
     for (int i = 0; i < modelPos.size(); ++i) {
+
         int numInstances = modelPos[i].size();
         if (numInstances > 0) {
             modeles[i].mesh().vao->bind();
-            glBindBuffer(GL_ARRAY_BUFFER, matrixVBO[i]);
-            for (unsigned int k = 0; k < 4; ++k) {
-                glEnableVertexAttribArray(3 + k);
-
-                // TODO : Fixe la segfault et le problème avec les VBO des matrices
-//                glVertexAttribPointer(3 + k, 4,
-//                                      GL_FLOAT,
-//                                      GL_FALSE,
-//                                      sizeof(QMatrix4x4),
-//                                      (void*)(k * sizeof(QVector4D)));
-                glVertexAttribDivisor(3 + k, 1);
+            if (matrixVBO[i] != 0) {
+                glBindBuffer(GL_ARRAY_BUFFER, matrixVBO[i]);
+            }else{
+                continue;
             }
+
             glDrawElementsInstanced(
                 GL_TRIANGLES,
                 modeles[i].mesh().triangles.size() * 3,
