@@ -10,7 +10,7 @@
 struct Cell {
     bool hasMesh;
     TileInstance object;
-
+    int entropy=0;
     Cell();
 };
 
@@ -26,6 +26,11 @@ public:
     void initializeBuffers(QOpenGLShaderProgram* program);
     void render(QOpenGLShaderProgram* program);
     void setModeles(QVector<TileModel> modeles);
+    void printGrid() ;
+
+    int getX() {return resX;}
+    int getY() {return resY;}
+    int getZ() {return resZ;}
 
     void printGrid();
 

@@ -7,6 +7,7 @@ TileInstance::TileInstance(TileModel* tileModel)
 
 TileInstance::TileInstance(
         TileModel* tileModel, Transform transform)
+
 {
     m_tileModel = tileModel;
     m_transform = transform;

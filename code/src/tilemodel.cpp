@@ -13,6 +13,12 @@ TileModel::TileModel(uint id, QString filename)
     setMesh(filename);
 }
 
+TileModel::TileModel(uint id, QSet<int> rules)
+{
+    m_id = id;
+    m_rules=rules;
+}
+
 TileModel::~TileModel(){
 
 }
@@ -32,7 +38,7 @@ void TileModel::setMesh(QString filename)
     computeBoundingBox();
 }
 
-uint TileModel::getId(){
+uint TileModel::getId()const{
     return m_id;
 }
 

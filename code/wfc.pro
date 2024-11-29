@@ -20,7 +20,8 @@ HEADERS += ./src/point3.h \
     src/tileinstance.h \
     src/tilemanager.h \
     src/transform.h \
-    ./src/grid.h
+    ./src/grid.h \
+    src/wfc.h
 SOURCES += ./src/main.cpp \
     ./src/gl/GLUtilityMethods.cpp\
     ./src/gl/BasicColors.cpp \
@@ -29,7 +30,8 @@ SOURCES += ./src/main.cpp \
     src/tileinstance.cpp \
     ./src/grid.cpp \
     src/tilemanager.cpp \
-    src/transform.cpp
+    src/transform.cpp \
+    src/wfc.cpp
 
 RESOURCES += shaders/
 

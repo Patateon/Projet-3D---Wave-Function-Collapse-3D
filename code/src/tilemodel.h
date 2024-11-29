@@ -10,6 +10,7 @@ public:
     // Constructor/Desctructor
     TileModel(uint id);
     TileModel(uint id, QString filename);
+    TileModel(uint id, QSet<int> rules);
     ~TileModel();
 
     // Getter/Setter
@@ -24,12 +25,15 @@ public:
 
     void computeBoundingBox();
 
-    uint getId();
+    uint getId()const;
+    QSet<int> getRules();
+    void setRules(QSet<int> rules);
 
     bool operator<(const TileModel & other) const;
 private:
     uint m_id;
     Mesh m_mesh;
+    QSet<int> m_rules;//Contient les indices de modele autorisé dans les cellules adjacentes
 
     QVector3D m_bbmin;
     QVector3D m_bbmax;

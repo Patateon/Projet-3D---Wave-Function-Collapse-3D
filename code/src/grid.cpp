@@ -12,6 +12,7 @@ Grid::Grid(
     QVector3D bbMin,int nModel)
 {
     cells = std::vector<Cell>(X * Y * Z);
+    //std::cout<<cells[0].hasMesh<<std::endl;
     resX = X;
     resY = Y;
     resZ = Z;
@@ -146,6 +147,25 @@ void Grid::render(QOpenGLShaderProgram* program) {
 void Grid::setModeles(QVector<TileModel> modeles){
     this->modeles=modeles;
 }
+
+void Grid::printGrid()  {
+    for (int z = 0; z < resZ; ++z) {
+        for (int y = 0; y < resY; ++y) {
+            for (int x = 0; x < resX; ++x) {
+                const Cell& cell = getCell(x, y, z);
+                if (cell.hasMesh) {
+                    std::cout << "Cell(" << x << ", " << y << ", " << z << ") hasMesh: " << cell.hasMesh
+                              << " mode: " << cell.object.tileModel()->getId() << " entropie : "<<cell.entropy<< std::endl;
+
+                }
+            }
+        }
+    }
+}
+
+
+
+
 
 void Grid::printGrid()  {
     for (int x = 0; x < resZ; ++x) {
