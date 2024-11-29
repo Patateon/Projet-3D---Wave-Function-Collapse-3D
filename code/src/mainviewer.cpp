@@ -153,7 +153,7 @@ void MainViewer::init() {
     setSceneRadius( 10.f );
 
     //
-    initializeRandomGrid(15, 2.0);
+    initializeRandomGrid(5, 2.0);
 
     showEntireScene();
 
