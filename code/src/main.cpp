@@ -33,7 +33,9 @@ int main( int argc , char** argv )
     for(int i = 0;i<3;i++){
         QSet<int> rules;
         rules.insert(std::min(i+1,2));
-        rules.insert(std::max(i-1,0));
+        if(i!=1){
+            rules.insert(std::max(i-1,0));
+        }
         TileModel tile(i);
         tile.setRules(rules);
         modeles.push_back(tile);
@@ -43,7 +45,6 @@ int main( int argc , char** argv )
 
     Wfc wfc(grid);
     wfc.runWFC(grid,8,modeles);
-    grid.printGrid();
 
     QObject::connect( viewer , SIGNAL(windowTitleUpdated(QString)) , mainWindow , SLOT(setWindowTitle(QString)) );
     viewer->updateTitle("Wave Function Collapse");

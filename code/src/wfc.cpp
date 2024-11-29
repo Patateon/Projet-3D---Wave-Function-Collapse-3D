@@ -29,6 +29,14 @@ bool Wfc::ruleCheck(QVector<QSet<int>> voisins,int id_center){
     }
     return !ruleBroken;
 }
+
+void print(const QSet<int>& set) {
+    QTextStream out(stdout);
+    for (auto it = set.constBegin(); it != set.constEnd(); ++it) {
+        out << *it << " ";
+    }
+    out << endl;
+}
 void Wfc::initWFC(int k,QVector<TileModel> &modeles){
     if(k>=(m_grid.getX()*m_grid.getY()*m_grid.getZ())){
         std::cout<<"Taille de la grille : "<<m_grid.getX()*m_grid.getY()*m_grid.getZ()<<" k trop grand"<<std::endl;
@@ -130,16 +138,22 @@ void Wfc::initWFC(int k,QVector<TileModel> &modeles){
             }
         }
     }
+    m_grid.printGrid();
 }
 
 void Wfc::runWFC(Grid& grid,int k,QVector<TileModel> &modeles){
+
+
+
     initWFC(k,modeles);
     bool isFull=false;
     std::random_device rd;
     std::mt19937 gen(rd());
     QSet<QVector3D> cellsDone;
+    std::cout<<"Debut de run"<<std::endl;
     //Comptage de cellule avec modele :
     int c=0;
+    std::cout<<"Dim grid : " << m_grid.getX() <<" "<<m_grid.getY()<<" "<<m_grid.getZ()<<" Total :  "<<m_grid.getX()*m_grid.getY()*m_grid.getZ()<<std::endl;
     for(int x = 0;x<m_grid.getX();x++){
         for(int y = 0;y<m_grid.getY();y++){
             for(int z = 0;z<m_grid.getZ();z++){
@@ -149,10 +163,16 @@ void Wfc::runWFC(Grid& grid,int k,QVector<TileModel> &modeles){
             }
         }
     }
-
+    std::cout<<"comptage initial fait : "<<c<<std::endl;
     //Remplissage grille
-    while(!isFull){
-        //isFull=true;
+    int iterationLimit=m_grid.getX()*m_grid.getY()*m_grid.getZ()*3;
+    int iterationCount=0;
+    bool isEnd=false;
+    while(!isFull&&!isEnd){
+        iterationCount++;
+        if(iterationCount>iterationLimit){
+            isEnd=true;
+        }
         //Parcours grille pour meilleure entropie
         int maxEntropy=-1;
         QVector<QVector3D> bestEntropy;
@@ -161,29 +181,36 @@ void Wfc::runWFC(Grid& grid,int k,QVector<TileModel> &modeles){
                 for(int z = 0;z<m_grid.getZ();z++){
                     if(m_grid.getCell(x,y,z).entropy>maxEntropy&&!m_grid.getCell(x,y,z).hasMesh){
                         maxEntropy=m_grid.getCell(x,y,z).entropy;
+                        std::cout<<x<<" "<<y<<" "<<z<<std::endl;
                     }
                 }
             }
         }
+        std::cout<<"entropie max : "<<maxEntropy<<std::endl;
+        //On chosiit les sommets qu'on garde, donc ceux avec entropie max
         for(int x = 0;x<m_grid.getX();x++){
             for(int y = 0;y<m_grid.getY();y++){
                 for(int z = 0;z<m_grid.getZ();z++){
-                    if(m_grid.getCell(x,y,z).entropy==maxEntropy){
+                    if(m_grid.getCell(x,y,z).entropy==maxEntropy&&!m_grid.getCell(x,y,z).hasMesh){
                         bestEntropy.push_back(QVector3D(x,y,z));
+                        std::cout<<x<<" "<<y<<" "<<z<<std::endl;
                     }
                 }
             }
         }
         bool isSet=false;
         //boucle du choix de sommet avec bonne entropie que l'on teste
-        while(!isSet){
-            //isSet=true;
-            std::uniform_int_distribution<> disEntropy(0,bestEntropy.size());
+        std::cout<<"while sur la position"<<std::endl;
+
+        while(!isSet&&!bestEntropy.isEmpty()){
+            std::uniform_int_distribution<> disEntropy(0,bestEntropy.size()-1);
             int randomPossibility=disEntropy(gen);
+            std::cout<<"indice dans bestEntropy : " << randomPossibility<<std::endl;
             //On a la cellule dans laquelle on va essayer de mettre un modele
             int randomX=bestEntropy[randomPossibility].x();
             int randomY=bestEntropy[randomPossibility].y();
             int randomZ=bestEntropy[randomPossibility].z();
+            std::cout<<randomX<<" "<<randomY<<" "<<randomZ<<std::endl;
             //On retire le candidat des candidats possibles
             bestEntropy.removeAt(randomPossibility);
             //Voisins de cellule choisie par entropie
@@ -196,10 +223,14 @@ void Wfc::runWFC(Grid& grid,int k,QVector<TileModel> &modeles){
             voisins.push_back(QVector3D(randomX,randomY,std::max(randomZ-1,0)));
             removeElementFromVector(voisins,QVector3D(randomX,randomY,randomZ));
             //recupération des règles des voisins
+
+            //Vérification de règle dans run ne fonctionne pas
+            std::cout<<"regles"<<std::endl;
             QVector<QSet<int>> ruleSets;
             for(int j=0;j<voisins.size();j++){
                 if(m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).hasMesh){
                     ruleSets.push_back(m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).object.tileModel()->getRules());
+                    print(m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).object.tileModel()->getRules());
                 }
             }
             //Liste des modeles possibles sur la cellule selon les règles des voisins présents
@@ -210,26 +241,36 @@ void Wfc::runWFC(Grid& grid,int k,QVector<TileModel> &modeles){
                     possibleModeles = possibleModeles.intersect(ruleSets[i]);
                 }
             }
+            std::cout<<"Modeles possibles : "<<std::endl;
+            print(possibleModeles);
             if(possibleModeles.isEmpty()){
                 isSet=false;
+                std::cout<<"Aucun modele possible"<<std::endl;
             }
             else{
-                std::uniform_int_distribution<> disModele(0,possibleModeles.size());
-                randomModel=disModele(gen);
-                TileInstance instance(&modeles[randomModel], Transform());
+                QList<int> list = possibleModeles.toList();
+                std::cout<<"Cellule remplie : "<<randomX<<" "<<randomY<<" "<<randomZ<<std::endl;
+                std::cout<<possibleModeles.size()<<std::endl;
+                std::uniform_int_distribution<> disModele(0,list.size()-1);
+                int randomModel=disModele(gen);
+                TileInstance instance(&modeles[list[randomModel]], Transform());
+                std::cout<<"Modele choisi : " << randomModel<<" "<<modeles[list[randomModel]].getId()<<std::endl;
                 m_grid.setObject(instance,randomX,randomY,randomZ);
-                endModelChoice=true;
                 isSet=true;
                 for(int j=0;j<voisins.size();j++){
                     m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).entropy++;
                 }
                 c++;
             }
+            std::cout<<"Fin de boucle while sur position"<<std::endl;
         }
         //Check de remplissage de grille
         if(c>=m_grid.getX()*m_grid.getY()*m_grid.getZ()){
+            std::cout<<"FIn de programme normale"<<std::endl;
             isFull=true;
         }
+        m_grid.printGrid();
+        std::cout<<isFull<<std::endl;
     }
 }
 
