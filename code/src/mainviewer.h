@@ -31,6 +31,7 @@
 
 #include "qt/QSmartAction.h"
 #include "grid.h"
+#include "wfc.h"
 
 
 class MainViewer : public QGLViewer , public QOpenGLFunctions_4_3_Core
@@ -39,6 +40,7 @@ class MainViewer : public QGLViewer , public QOpenGLFunctions_4_3_Core
 
     Mesh mesh;
     Grid * grid;
+    Wfc * wfc;
 
     QOpenGLShaderProgram *program = nullptr;
 
@@ -61,6 +63,8 @@ public :
     void initializeModels();
     void initializeGrid();
     void initializeRandomGrid(uint dimension, float spacing);
+    void initializeBasicWFC(uint dimension, float spacing);
+
     void initializeProgramShader();
     void initializeShaders();
 

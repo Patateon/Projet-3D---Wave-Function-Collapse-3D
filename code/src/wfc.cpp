@@ -141,7 +141,7 @@ void Wfc::initWFC(int k,QVector<TileModel> &modeles){
     m_grid.printGrid();
 }
 
-void Wfc::runWFC(Grid& grid,int k,QVector<TileModel> &modeles){
+void Wfc::runWFC(int k,QVector<TileModel> &modeles){
 
 
 
