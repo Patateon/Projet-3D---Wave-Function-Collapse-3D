@@ -55,3 +55,7 @@ compile_commands.json
 
 # Qt clangd
 .qtc_clangd
+
+# Autres
+qmake_qmake_immediate.qrc
+wfc

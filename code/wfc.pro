@@ -12,12 +12,13 @@ OBJECTS_DIR = ./tmp/obj
 # Input
 HEADERS += ./src/point3.h \
     ./src/Mesh.h \
-    ./src/MyViewer.h \
     ./src/BasicIO.h \
     ./src/gl/GLUtilityMethods.h \
     ./src/gl/BasicColors.h \
     ./src/tilemodel.h \
+    src/mainviewer.h \
     src/tileinstance.h \
+    src/tilemanager.h \
     src/transform.h \
     ./src/grid.h \
     src/wfc.h
@@ -25,8 +26,10 @@ SOURCES += ./src/main.cpp \
     ./src/gl/GLUtilityMethods.cpp\
     ./src/gl/BasicColors.cpp \
     ./src/tilemodel.cpp \
+    src/mainviewer.cpp \
     src/tileinstance.cpp \
     ./src/grid.cpp \
+    src/tilemanager.cpp \
     src/transform.cpp \
     src/wfc.cpp
 

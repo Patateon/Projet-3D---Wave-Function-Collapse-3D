@@ -17,14 +17,14 @@ struct Cell {
 class Grid : protected QOpenGLFunctions_4_5_Core {
 public:
     Grid();
-    Grid(int X, int Y, int Z, int dimX, int dimY, int dimZ, QVector3D bbMin,int nModel);
+    Grid(int X, int Y, int Z, float dim_x, float dim_y, float dim_z, QVector3D bbMin,int nModel);
 
     Cell& getCell(int x, int y, int z);
     void setObject(TileInstance object, int x, int y, int z);
 
     uint getCellIndex(int x, int y, int z) const;
-    void initializeBuffers();
-    void render(GLuint program);
+    void initializeBuffers(QOpenGLShaderProgram* program);
+    void render(QOpenGLShaderProgram* program);
     void setModeles(QVector<TileModel> modeles);
     void printGrid() ;
 
@@ -32,6 +32,7 @@ public:
     int getY() {return resY;}
     int getZ() {return resZ;}
 
+    void printGrid();
 
 private:
     QVector3D BBmin;
@@ -45,7 +46,9 @@ private:
     float dimZ;
     QVector<QVector<QVector3D>> modelPos;
     QVector<QVector<QMatrix4x4>> modelMatrixes;
-    GLuint matrixVBO;
+    QVector<GLuint> matrixVBO;
+
+    // TODO : Remplacer par un set
     QVector<TileModel> modeles;//Charger les modeles a mettre dans le MyViewer?
 };
 
