@@ -15,6 +15,7 @@ public:
 
     // Getter/Setter
     const uint & id() {return m_id;}
+    uint id() const {return m_id;}
     Mesh & mesh() {return m_mesh;}
     const QVector3D & bbmin() {return m_bbmin;}
     const QVector3D & bbmax() {return m_bbmax;}
@@ -24,8 +25,6 @@ public:
     void setMesh(QString filename);
 
     void computeBoundingBox();
-
-    uint getId()const;
     QSet<int> getRules();
     void setRules(QSet<int> rules);
 

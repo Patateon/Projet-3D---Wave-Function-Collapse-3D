@@ -254,7 +254,7 @@ void Wfc::runWFC(Grid& grid,int k,QVector<TileModel> &modeles){
                 std::uniform_int_distribution<> disModele(0,list.size()-1);
                 int randomModel=disModele(gen);
                 TileInstance instance(&modeles[list[randomModel]], Transform());
-                std::cout<<"Modele choisi : " << randomModel<<" "<<modeles[list[randomModel]].getId()<<std::endl;
+                std::cout<<"Modele choisi : " << randomModel<<" "<<modeles[list[randomModel]].id()<<std::endl;
                 m_grid.setObject(instance,randomX,randomY,randomZ);
                 isSet=true;
                 for(int j=0;j<voisins.size();j++){

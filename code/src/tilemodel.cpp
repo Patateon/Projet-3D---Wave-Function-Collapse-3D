@@ -38,8 +38,12 @@ void TileModel::setMesh(QString filename)
     computeBoundingBox();
 }
 
-uint TileModel::getId()const{
-    return m_id;
+void TileModel::setRules(QSet<int> rules){
+    m_rules=rules;
+}
+
+QSet<int> TileModel::getRules(){
+    return m_rules;
 }
 
 bool TileModel::operator<(const TileModel & other) const{

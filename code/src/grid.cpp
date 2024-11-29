@@ -44,7 +44,7 @@ void Grid::setObject(TileInstance object,int x,int y,int z){
     Cell& cell = getCell(x,y,z);
     cell.object = object;
     cell.hasMesh = true;
-    int id = cell.object.tileModel()->getId();
+    int id = cell.object.tileModel()->id();
     modelPos[id].push_back(QVector3D(x,y,z));
     //décalage du modèle
     QVector3D size = object.tileModel()->bbmax() - object.tileModel()->bbmin();
@@ -154,36 +154,13 @@ void Grid::printGrid()  {
             for (int x = 0; x < resX; ++x) {
                 const Cell& cell = getCell(x, y, z);
                 if (cell.hasMesh) {
-                    std::cout << "Cell(" << x << ", " << y << ", " << z << ") hasMesh: " << cell.hasMesh
-                              << " mode: " << cell.object.tileModel()->getId() << " entropie : "<<cell.entropy<< std::endl;
+                    std::cout << "Cell(" << x
+                              << ", " << y
+                              << ", " << z << ") hasMesh: "
+                              << cell.hasMesh
+                              << " mode: " << cell.object.tileModel()->id()
+                              << " entropie : "<<cell.entropy<< std::endl;
 
-                }
-            }
-        }
-    }
-}
-
-
-
-
-
-void Grid::printGrid()  {
-    for (int x = 0; x < resZ; ++x) {
-        for (int y = 0; y < resY; ++y) {
-            for (int z = 0; z < resX; ++z) {
-                Cell& cell = getCell(x, y, z);
-                std::cout << "Cell("
-                          << x << ", "
-                          << y << ", "
-                          << z << ") hasMesh: "
-                          << cell.hasMesh;
-
-                if (cell.hasMesh){
-                    std::cout << " id: "
-                              << cell.object.tileModel()->id()
-                              << std::endl;
-                }else{
-                    std::cout << std::endl;
                 }
             }
         }

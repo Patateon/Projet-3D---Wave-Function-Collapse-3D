@@ -32,8 +32,6 @@ public:
     int getY() {return resY;}
     int getZ() {return resZ;}
 
-    void printGrid();
-
 private:
     QVector3D BBmin;
     QVector3D BBmax;
