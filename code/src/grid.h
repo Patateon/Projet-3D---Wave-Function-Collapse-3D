@@ -27,6 +27,7 @@ public:
     void render(QOpenGLShaderProgram* program);
     void setModeles(QVector<TileModel> modeles);
     void printGrid() ;
+    void clean();
 
     int getX() {return resX;}
     int getY() {return resY;}

@@ -166,3 +166,35 @@ void Grid::printGrid()  {
         }
     }
 }
+
+void Grid::clean() {
+    // Iterate through all cells and reset them
+    for (int z = 0; z < resZ; ++z) {
+        for (int y = 0; y < resY; ++y) {
+            for (int x = 0; x < resX; ++x) {
+                Cell& cell = getCell(x, y, z);
+                cell.hasMesh = false;
+                cell.object = nullptr;
+                cell.entropy = 0.0f; // Assuming entropy should be reset too
+            }
+        }
+    }
+
+    // Clear the model position and matrix vectors
+    for (auto& posVec : modelPos) {
+        posVec.clear();
+    }
+
+    for (auto& matrixVec : modelMatrixes) {
+        matrixVec.clear();
+    }
+
+    // Optionally, clear the matrixVBOs if they need to be re-initialized later
+    for (auto& vbo : matrixVBO) {
+        if (vbo != 0) {
+            glDeleteBuffers(1, &vbo);
+            vbo = 0;
+        }
+    }
+}
+
