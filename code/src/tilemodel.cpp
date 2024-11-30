@@ -2,6 +2,10 @@
 
 #include "BasicIO.h"
 
+
+//Ajout de paramtre de rotation possibles pour chaque direction au TileModel pour lorsque l'on set une instance du modele on pioche au hasard dedans.
+//Ensuite quand on set quelque chose a coté il faudra récupérer la rotation du voisin le plus important(voir améliorer regles)
+//Avec cette approche on estime que lorsque l'on charge un modele il est automatiquement de face lorsqu'on le rend sur la fenetre
 TileModel::TileModel(uint id)
 {
     m_id = id;
