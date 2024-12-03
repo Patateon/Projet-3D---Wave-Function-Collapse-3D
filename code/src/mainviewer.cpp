@@ -79,7 +79,6 @@ void MainViewer::initializeRandomGrid(uint dimension, float spacing) {
         for (uint y = 0; y < dimension; y++){
             for (uint z = 0; z < dimension; z++){
                 int model = rand()%2;
-                qDebug() << x << " " << y << " " << z << " | "<<model;
                 TileInstance instance = TileInstance(&modeles[model]);
                 grid->setObject(instance, x, y, z);
             }
@@ -124,8 +123,8 @@ void MainViewer::initializeBasicWFC(uint dimension, float spacing) {
         }
         modeles[i].setRules(rules);
 
-        std::cout<<"Regles modele "<<i<<" : "<<std::endl;
-        qDebug() << rules;
+//        std::cout<<"Regles modele "<<i<<" : "<<std::endl;
+//        qDebug() << rules;
     }
 
     wfc = new Wfc(*grid);
@@ -216,9 +215,17 @@ void MainViewer::draw() {
 
     QMatrix4x4 model = QMatrix4x4();
     QMatrix4x4 viewProjection = projectionMatrix * viewMatrix; // OpenGL : Projection * View
+    qglviewer::Vec qglCameraPosition = camera()->position();
+    qDebug() << qglCameraPosition.x << " "
+             << qglCameraPosition.y << " "
+             << qglCameraPosition.z;
+    QVector3D cameraPosition = QVector3D(qglCameraPosition.x,
+                                         qglCameraPosition.y,
+                                         qglCameraPosition.z);
 
     drawAxis(5);
     program->bind();
+    program->setUniformValue("cameraPosition", cameraPosition);
     program->setUniformValue("viewProjMatrix", viewProjection);
 
     glEnable(GL_DEPTH_TEST);

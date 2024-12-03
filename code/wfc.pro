@@ -61,5 +61,6 @@ release:QMAKE_CFLAGS_RELEASE += -O3 \
     -fopenmp
 
 DISTFILES += \
+    shaders/gshaders.glsl \
     src/shader/fshader.glsl \
     src/shader/vshader.glsl
