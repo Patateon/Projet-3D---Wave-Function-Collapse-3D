@@ -16,6 +16,7 @@ public:
 
     QMatrix4x4 getLocalModel();
 
+
 private:
     QVector3D m_translation;
     QQuaternion m_rotation;

@@ -21,6 +21,7 @@ TileModel::TileModel(uint id, QSet<int> rules)
 {
     m_id = id;
     m_rules=rules;
+
 }
 
 TileModel::~TileModel(){
@@ -50,6 +51,25 @@ QSet<int> TileModel::getRules(){
     return m_rules;
 }
 
+void TileModel::setType(QVector<TileModel> modeles){
+    if(m_rules.size()<=modeles.size()/3){
+        m_type=1;
+    }
+    else{
+        m_type=0;
+    }
+}
+
+int TileModel::getType(){
+    return m_type;
+}
+
+void TileModel::setRots(QVector<bool> rotx,QVector<bool> roty,QVector<bool> rotz){
+    m_rotx=rotx;
+    m_roty=roty;
+    m_rotz=rotz;
+}
+
 bool TileModel::operator<(const TileModel & other) const{
     return m_id < other.m_id;
 }
@@ -77,4 +97,15 @@ void TileModel::computeBoundingBox() {
     }
 }
 
+QVector<bool> TileModel::getXRot(){
+    return m_rotx;
+}
+
+QVector<bool> TileModel::getYRot(){
+    return m_roty;
+}
+
+QVector<bool> TileModel::getZRot(){
+    return m_rotz;
+}
 
