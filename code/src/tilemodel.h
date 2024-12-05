@@ -27,13 +27,21 @@ public:
     void computeBoundingBox();
     QSet<int> getRules();
     void setRules(QSet<int> rules);
-
+    QVector<bool> getXRot();
+    QVector<bool> getYRot();
+    QVector<bool> getZRot();
+    void setRots(QVector<bool> rotx,QVector<bool> roty,QVector<bool> rotz);
+    int getType();
+    void setType(QVector<TileModel> modeles);
     bool operator<(const TileModel & other) const;
 private:
     uint m_id;
     Mesh m_mesh;
     QSet<int> m_rules;//Contient les indices de modele autorisé dans les cellules adjacentes
-
+    QVector<bool> m_rotx;//regles sur rotation autorisée , 90 180 270
+    QVector<bool> m_roty;
+    QVector<bool> m_rotz;
+    uint m_type;
     QVector3D m_bbmin;
     QVector3D m_bbmax;
 };

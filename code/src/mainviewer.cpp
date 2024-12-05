@@ -78,7 +78,7 @@ void MainViewer::initializeRandomGrid(uint dimension, float spacing) {
             for (uint z = 0; z < dimension; z++){
                 int model = rand()%2;
                 TileInstance instance = TileInstance(&modeles[model]);
-                grid->setObject(instance, x, y, z);
+                grid->setObject(instance, x, y, z,0,0,0);
             }
         }
     }
@@ -87,7 +87,7 @@ void MainViewer::initializeRandomGrid(uint dimension, float spacing) {
 }
 
 void MainViewer::initializeBasicWFC(uint dimension, float spacing) {
-    QString modelPath1 = QString("models/sphere.off");
+    QString modelPath1 = QString("models/monkey.off");
     QString modelPath2 = QString("models/arma.off");
     QString modelPath3 = QString("models/monkey.off");
 
@@ -96,16 +96,20 @@ void MainViewer::initializeBasicWFC(uint dimension, float spacing) {
     TileModel model3 = TileModel(2, modelPath1);
     TileModel model4 = TileModel(3, modelPath1);
 
+
     QVector<TileModel> modeles;
     modeles.append(model1);
     modeles.append(model2);
     modeles.append(model3);
     modeles.append(model4);
-
+  
+    QVector<QVector<bool>> x_rot;
+    QVector<QVector<bool>> y_rot;
+    QVector<QVector<bool>> z_rot;
+  
     for(int i = 0; i < modeles.size(); i++){
         modeles[i].mesh().initVAO(program);
     }
-
 
     grid = new Grid(dimension, dimension, dimension,
                     spacing, spacing, spacing,
@@ -114,18 +118,23 @@ void MainViewer::initializeBasicWFC(uint dimension, float spacing) {
 
     for(int i = 0;i<4;i++){
         QSet<int> rules;
+        QVector<bool> x_rot={1,i%2,(i*3)%2,0};
+        QVector<bool> y_rot={1,(i+1)%2,(i*3)%2,0};
+        QVector<bool> z_rot={1,i%2,(i*3+1)%2,0};
         rules.insert(std::min(i+1,2));
         if(i!=1){
             rules.insert(std::max(i-1,0));
         }
         modeles[i].setRules(rules);
-
+        modeles[i].setRots(x_rot,y_rot,z_rot);
+        modeles[i].setType(modeles);
 //        std::cout<<"Regles modele "<<i<<" : "<<std::endl;
 //        qDebug() << rules;
+        std::cout<<"type : "<<modeles[i].getType()<<std::endl;
     }
 
     wfc = new Wfc(*grid);
-    wfc->runWFC(5, modeles);
+    wfc->runWFC(20, modeles);
 
     grid->initializeBuffers(program);
 }
@@ -194,8 +203,8 @@ void MainViewer::init() {
     setSceneRadius( 20.f );
 
     //
-    initializeRandomGrid(10, 2.0);
-//    initializeBasicWFC(10, 2.0);
+//    initializeRandomGrid(5, 2.0);
+    initializeBasicWFC(5, 2.0);
 
     showEntireScene();
 

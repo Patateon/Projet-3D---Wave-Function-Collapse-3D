@@ -40,7 +40,7 @@ uint Grid::getCellIndex(int x, int y, int z) const {
     return x + resX * (y + resY * z);
 }
 
-void Grid::setObject(TileInstance object,int x,int y,int z){
+void Grid::setObject(TileInstance object,int x,int y,int z,float x_deg,float y_deg,float z_deg){
     Cell& cell = getCell(x,y,z);
     cell.object = object;
     cell.hasMesh = true;
@@ -58,6 +58,8 @@ void Grid::setObject(TileInstance object,int x,int y,int z){
 
     cell.object.transform().scale() = QVector3D(1.0f, 1.0f, 1.0f);
     cell.object.transform().translation() = translate;
+    QQuaternion rotation = QQuaternion::fromEulerAngles(QVector3D(x_deg,y_deg,z_deg));
+    cell.object.transform().rotation()=rotation;
 
     //On met a jour commme ca pour l'instant
     QMatrix4x4 matrix = cell.object.transform().getLocalModel();
@@ -185,4 +187,67 @@ void Grid::printGrid()  {
             }
         }
     }
+}
+
+void Grid::clean() {
+    // Iterate through all cells and reset them
+    for (int z = 0; z < resZ; ++z) {
+        for (int y = 0; y < resY; ++y) {
+            for (int x = 0; x < resX; ++x) {
+                Cell& cell = getCell(x, y, z);
+                cell.hasMesh = false;
+                cell.object = nullptr;
+                cell.entropy = 0.0f; // Assuming entropy should be reset too
+            }
+        }
+    }
+
+    // Clear the model position and matrix vectors
+    for (auto& posVec : modelPos) {
+        posVec.clear();
+    }
+
+    for (auto& matrixVec : modelMatrixes) {
+        matrixVec.clear();
+    }
+
+    // Optionally, clear the matrixVBOs if they need to be re-initialized later
+    for (auto& vbo : matrixVBO) {
+        if (vbo != 0) {
+            glDeleteBuffers(1, &vbo);
+            vbo = 0;
+        }
+    }
+}
+
+QVector3D Grid::getCellCoordinates(int x, int y, int z) {
+    // Calcul des coordonnées en fonction de la taille des cellules et de leur position dans la grille
+    float coordX = x * dimX + dimX / 2.0f;
+    float coordY = y * dimY + dimY / 2.0f;
+    float coordZ = z * dimZ + dimZ / 2.0f;
+
+    // Retourne les coordonnées sous forme de QVector3D
+    return QVector3D(coordX, coordY, coordZ);
+}
+
+bool Grid::isTypeClose(int x, int y, int z, uint type) {
+    for (int dz = -1; dz <= 1; ++dz) {
+        for (int dy = -1; dy <= 1; ++dy) {
+            for (int dx = -1; dx <= 1; ++dx) {
+                if (dx == 0 && dy == 0 && dz == 0) {
+                    continue;
+                }
+                int nx = x + dx;
+                int ny = y + dy;
+                int nz = z + dz;
+                if (nx >= 0 && nx < resX && ny >= 0 && ny < resY && nz >= 0 && nz < resZ) {
+                    Cell& neighborCell = getCell(nx, ny, nz);
+                    if (neighborCell.hasMesh && neighborCell.object.tileModel()->getType() == type) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
 }

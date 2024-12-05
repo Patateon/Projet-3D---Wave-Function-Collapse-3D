@@ -25,16 +25,21 @@ public:
     int getZ() {return resZ;}
     Cell& getCell(int x, int y, int z);
     uint getCellIndex(int x, int y, int z) const;
+    QVector3D getCellCoordinates(int x, int y, int z);
     void setObject(TileInstance object, int x, int y, int z);
+    void setObject(TileInstance object, int x, int y, int z,float x_rot,float y_rot, float z_rot);
     void setModeles(QVector<TileModel> modeles);
 
     // Draw Functions
     void initializeBuffers(QOpenGLShaderProgram* program);
     void render(QOpenGLShaderProgram* program);
+    void clean();
+  
+    bool isTypeClose(int x, int y, int z, uint type);
 
     // Debug Functions
     void drawNormales(QOpenGLShaderProgram* program);
-    void printGrid() ;
+    void printGrid();
 
 private:
     QVector3D BBmin;
@@ -49,11 +54,8 @@ private:
     QVector<QVector<QVector3D>> modelPos;
     QVector<QVector<QMatrix4x4>> modelMatrixes;
     QVector<GLuint> matrixVBO;
-
-    int compteur = 0;
-
-    // TODO : Remplacer par un set
     QVector<TileModel> modeles;//Charger les modeles a mettre dans le MyViewer?
+
 };
 
 #endif // GRID_H
