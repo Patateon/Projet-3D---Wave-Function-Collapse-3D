@@ -58,17 +58,15 @@ void MainViewer::initializeRandomGrid(uint dimension, float spacing) {
     TileModel model3 = TileModel(2, modelPath3);
     TileModel model4 = TileModel(3, modelPath1);
 
-    model1.mesh().initVAO(program);
-    model2.mesh().initVAO(program);
-    model3.mesh().initVAO(program);
-    model4.mesh().initVAO(program);
-
     QVector<TileModel> modeles;
     modeles.append(model1);
     modeles.append(model2);
     modeles.append(model3);
     modeles.append(model4);
 
+    for(int i = 0; i < modeles.size(); i++){
+        modeles[i].mesh().initVAO(program);
+    }
 
     grid = new Grid(dimension, dimension, dimension,
                     spacing, spacing, spacing,
@@ -79,7 +77,6 @@ void MainViewer::initializeRandomGrid(uint dimension, float spacing) {
         for (uint y = 0; y < dimension; y++){
             for (uint z = 0; z < dimension; z++){
                 int model = rand()%2;
-                qDebug() << x << " " << y << " " << z << " | "<<model;
                 TileInstance instance = TileInstance(&modeles[model]);
                 grid->setObject(instance, x, y, z);
             }
@@ -99,21 +96,20 @@ void MainViewer::initializeBasicWFC(uint dimension, float spacing) {
     TileModel model3 = TileModel(2, modelPath1);
     TileModel model4 = TileModel(3, modelPath1);
 
-    model1.mesh().initVAO(program);
-    model2.mesh().initVAO(program);
-    model3.mesh().initVAO(program);
-    model4.mesh().initVAO(program);
-
     QVector<TileModel> modeles;
     modeles.append(model1);
     modeles.append(model2);
     modeles.append(model3);
     modeles.append(model4);
 
+    for(int i = 0; i < modeles.size(); i++){
+        modeles[i].mesh().initVAO(program);
+    }
+
 
     grid = new Grid(dimension, dimension, dimension,
                     spacing, spacing, spacing,
-                    QVector3D(), 4);
+                    QVector3D(spacing/2.0, spacing/2.0, spacing/2.0), 4);
     grid->setModeles(modeles);
 
     for(int i = 0;i<4;i++){
@@ -124,8 +120,8 @@ void MainViewer::initializeBasicWFC(uint dimension, float spacing) {
         }
         modeles[i].setRules(rules);
 
-        std::cout<<"Regles modele "<<i<<" : "<<std::endl;
-        qDebug() << rules;
+//        std::cout<<"Regles modele "<<i<<" : "<<std::endl;
+//        qDebug() << rules;
     }
 
     wfc = new Wfc(*grid);
@@ -194,12 +190,12 @@ void MainViewer::init() {
     glEnable(GL_COLOR_MATERIAL);
 
     //
-    setSceneCenter( qglviewer::Vec( 0 , 0 , 0 ) );
-    setSceneRadius( 10.f );
+    setSceneCenter( qglviewer::Vec( 10 , 10 , 10 ) );
+    setSceneRadius( 20.f );
 
     //
-//    initializeRandomGrid(5, 2.0);
-    initializeBasicWFC(3, 2.0);
+    initializeRandomGrid(10, 2.0);
+//    initializeBasicWFC(10, 2.0);
 
     showEntireScene();
 
@@ -216,9 +212,14 @@ void MainViewer::draw() {
 
     QMatrix4x4 model = QMatrix4x4();
     QMatrix4x4 viewProjection = projectionMatrix * viewMatrix; // OpenGL : Projection * View
+    qglviewer::Vec qglCameraPosition = camera()->position();
+    QVector3D cameraPosition = QVector3D(qglCameraPosition.x,
+                                         qglCameraPosition.y,
+                                         qglCameraPosition.z);
 
     drawAxis(5);
     program->bind();
+    program->setUniformValue("cameraPosition", cameraPosition);
     program->setUniformValue("viewProjMatrix", viewProjection);
 
     glEnable(GL_DEPTH_TEST);

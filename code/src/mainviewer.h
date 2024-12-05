@@ -50,6 +50,10 @@ class MainViewer : public QGLViewer , public QOpenGLFunctions_4_3_Core
 
     QWidget * controls;
 
+private :
+    float m_scale_normal = 1.0;
+    bool m_display_normal = true;
+
 public :
 
     MainViewer(QGLWidget * parent = NULL) : QGLViewer(parent) , QOpenGLFunctions_4_3_Core() {

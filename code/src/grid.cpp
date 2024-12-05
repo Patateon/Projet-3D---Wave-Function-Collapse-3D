@@ -54,6 +54,7 @@ void Grid::setObject(TileInstance object,int x,int y,int z){
 
     QVector3D scale(scaling, scaling, scaling);
     QVector3D translate(x*dimX, y*dimY, z*dimZ);
+    translate = BBmin + translate;
 
     cell.object.transform().scale() = QVector3D(1.0f, 1.0f, 1.0f);
     cell.object.transform().translation() = translate;
@@ -118,7 +119,6 @@ void Grid::initializeBuffers(QOpenGLShaderProgram* program) {
 
 void Grid::render(QOpenGLShaderProgram* program) {
     program->bind();
-
     for (int i = 0; i < modelPos.size(); ++i) {
 
         int numInstances = modelPos[i].size();
@@ -139,13 +139,33 @@ void Grid::render(QOpenGLShaderProgram* program) {
                 );
             glBindVertexArray(0);
             glBindBuffer(GL_ARRAY_BUFFER, 0);
+            modeles[i].mesh().vao->release();
         }
     }
+    qDebug() << compteur;
     program->release();
 }
 
 void Grid::setModeles(QVector<TileModel> modeles){
     this->modeles=modeles;
+}
+
+void Grid::drawNormales(QOpenGLShaderProgram* program){
+    for(int i = 0; i < modelPos.size(); i++){
+        int numInstances = modelPos[i].size();
+        if (numInstances > 0) {
+            modeles[i].mesh().vao->bind();
+            if (matrixVBO[i] != 0) {
+                glBindBuffer(GL_ARRAY_BUFFER, matrixVBO[i]);
+            }else{
+                continue;
+            }
+
+            modeles[i].mesh().renderVAONormalLine(program);
+            glBindVertexArray(0);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+        }
+    }
 }
 
 void Grid::printGrid()  {

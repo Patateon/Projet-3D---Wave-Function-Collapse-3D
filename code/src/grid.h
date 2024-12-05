@@ -19,18 +19,22 @@ public:
     Grid();
     Grid(int X, int Y, int Z, float dim_x, float dim_y, float dim_z, QVector3D bbMin,int nModel);
 
-    Cell& getCell(int x, int y, int z);
-    void setObject(TileInstance object, int x, int y, int z);
-
-    uint getCellIndex(int x, int y, int z) const;
-    void initializeBuffers(QOpenGLShaderProgram* program);
-    void render(QOpenGLShaderProgram* program);
-    void setModeles(QVector<TileModel> modeles);
-    void printGrid() ;
-
+    // Getters and Setters
     int getX() {return resX;}
     int getY() {return resY;}
     int getZ() {return resZ;}
+    Cell& getCell(int x, int y, int z);
+    uint getCellIndex(int x, int y, int z) const;
+    void setObject(TileInstance object, int x, int y, int z);
+    void setModeles(QVector<TileModel> modeles);
+
+    // Draw Functions
+    void initializeBuffers(QOpenGLShaderProgram* program);
+    void render(QOpenGLShaderProgram* program);
+
+    // Debug Functions
+    void drawNormales(QOpenGLShaderProgram* program);
+    void printGrid() ;
 
 private:
     QVector3D BBmin;
@@ -45,6 +49,8 @@ private:
     QVector<QVector<QVector3D>> modelPos;
     QVector<QVector<QMatrix4x4>> modelMatrixes;
     QVector<GLuint> matrixVBO;
+
+    int compteur = 0;
 
     // TODO : Remplacer par un set
     QVector<TileModel> modeles;//Charger les modeles a mettre dans le MyViewer?
