@@ -32,6 +32,69 @@ struct Mesh{
     QOpenGLBuffer *vbo_uv = nullptr;
     QOpenGLBuffer *vbo_triangles = nullptr;
 
+    // Normal to draw
+    QOpenGLVertexArrayObject *vao_line_normal = nullptr;
+    QOpenGLBuffer *vbo_normal_line = nullptr;
+    std::vector< Vertex > lineVertices;
+
+    void initVAONormalLine(QOpenGLShaderProgram* program, float scale) {
+        if (vertices.size() == 0 ||
+                vertices.size() != normales.size()){
+            qWarning() << "Invalid vertices and normales sizes";
+        }
+
+        lineVertices.clear();
+        for(uint i = 0; i < vertices.size(); i++){
+            point3d start = vertices[i].p;
+            point3d end = vertices[i].p + normales[i].p * scale;
+            Vertex vstart, vend;
+            vstart.p = start;
+            vend.p = end;
+
+            lineVertices.push_back(vstart);
+            lineVertices.push_back(vend);
+        }
+
+        vao_line_normal = new QOpenGLVertexArrayObject();
+        if (!vao_line_normal->create()){
+            program->release();
+            qWarning() << "Could not create line VAO!";
+            return;
+        }
+        vao_line_normal->bind();
+
+        vbo_normal_line = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+        if (!vbo_normal_line->create()){
+            qWarning() << "Could not create vertex VBO!";
+            program->release();
+            return;
+        }
+        vbo_normal_line->bind();
+        vbo_normal_line->setUsagePattern(QOpenGLBuffer::StaticDraw);
+        vbo_normal_line->allocate(
+                    lineVertices.data(), lineVertices.size() * sizeof(point3d));
+
+        program->enableAttributeArray(0);
+        program->setAttributeBuffer(
+                    0, GL_DOUBLE, offsetof(Vertex, p), 3, sizeof(Vertex));
+
+        vao_line_normal->release();
+        program->release();
+    }
+
+    void renderVAONormalLine(QOpenGLShaderProgram* program){
+
+        if (vao_line_normal == nullptr){
+            return;
+        }
+        vao_line_normal->bind();
+
+        glDrawArrays(GL_LINES, 0, lineVertices.size());
+
+        vao_line_normal->release();
+        program->release();
+    }
+
     void computeNormales(){
         normales.clear();
         normales.resize(vertices.size(), Vertex(0.0, 0.0, 0.0));
@@ -63,7 +126,7 @@ struct Mesh{
     void initVAO(QOpenGLShaderProgram* program) {
 
         if (vertices.empty() || triangles.empty()){
-            qDebug() << "No vertices or triangles!";
+            qWarning() << "No vertices or triangles!";
             return;
         }
 
@@ -72,14 +135,14 @@ struct Mesh{
         vao = new QOpenGLVertexArrayObject();
         if (!vao->create()){
             program->release();
-            qDebug() << "Could not create VAO!";
+            qWarning() << "Could not create VAO!";
             return;
         }
         vao->bind();
 
         vbo_vertex = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
         if (!vbo_vertex->create()){
-            qDebug() << "Could not create vertex VBO!";
+            qWarning() << "Could not create vertex VBO!";
             program->release();
             return;
         }
@@ -90,7 +153,7 @@ struct Mesh{
 
         vbo_normales = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
         if (!vbo_normales->create()){
-            qDebug() << "Could not create vertex VBO!";
+            qWarning() << "Could not create vertex VBO!";
             program->release();
             return;
         }
@@ -99,9 +162,20 @@ struct Mesh{
         vbo_normales->allocate(
                     normales.data(), normales.size() * sizeof(point3d));
 
+//        vbo_uv = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+//        if (!vbo_uv->create()){
+//            qWarning() << "Could not create vertex VBO!";
+//            program->release();
+//            return;
+//        }
+//        vbo_uv->bind();
+//        vbo_uv->setUsagePattern(QOpenGLBuffer::StaticDraw);
+//        vbo_uv->allocate(
+//                    uv.data(), uv.size() * sizeof(QVector2D));
+
         vbo_triangles = new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
         if (!vbo_triangles->create()){
-            qDebug() << "Could not create triangles VBO!";
+            qWarning() << "Could not create triangles VBO!";
             program->release();
             return;
         }
@@ -113,6 +187,14 @@ struct Mesh{
         program->enableAttributeArray(0);
         program->setAttributeBuffer(
                     0, GL_DOUBLE, offsetof(Vertex, p), 3, sizeof(Vertex));
+
+        program->enableAttributeArray(1);
+        program->setAttributeBuffer(
+                    1, GL_DOUBLE, offsetof(Vertex, p), 3, sizeof(Vertex));
+
+//        program->enableAttributeArray(2);
+//        program->setAttributeBuffer(
+//                    2, GL_DOUBLE, sizeof(QVector2D), 3, sizeof(QVector2D));
 
         vao->release();
         program->release();
