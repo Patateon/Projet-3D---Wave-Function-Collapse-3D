@@ -11,14 +11,16 @@ OBJECTS_DIR = ./tmp/obj
 
 # Input
 HEADERS += ./src/point3.h \
+    ../../../Téléchargements/OBJ_Loader.h \
     ./src/Mesh.h \
     ./src/BasicIO.h \
     ./src/gl/GLUtilityMethods.h \
     ./src/gl/BasicColors.h \
     ./src/tilemodel.h \
+    extern/objloader/OBJ_Loader.h \
     src/mainviewer.h \
+    src/material.h \
     src/tileinstance.h \
-    src/tilemanager.h \
     src/transform.h \
     ./src/grid.h \
     src/wfc.h
@@ -27,9 +29,9 @@ SOURCES += ./src/main.cpp \
     ./src/gl/BasicColors.cpp \
     ./src/tilemodel.cpp \
     src/mainviewer.cpp \
+    src/material.cpp \
     src/tileinstance.cpp \
     ./src/grid.cpp \
-    src/tilemanager.cpp \
     src/transform.cpp \
     src/wfc.cpp
 
@@ -61,5 +63,6 @@ release:QMAKE_CFLAGS_RELEASE += -O3 \
     -fopenmp
 
 DISTFILES += \
+    shaders/gshader.glsl \
     src/shader/fshader.glsl \
     src/shader/vshader.glsl

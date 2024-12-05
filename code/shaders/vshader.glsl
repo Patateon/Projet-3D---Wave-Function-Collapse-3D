@@ -12,15 +12,19 @@ layout(location = 6) in vec4 instanceMatrixRow3;
 uniform mat4 viewProjMatrix;
 
 //out vec2 TexCoord;
+out vec3 worldPosition;
+out vec3 worldNormal;
 
 void main() {
-    mat4 instanceMatrix = mat4(
+    mat4 instanceModel = mat4(
         instanceMatrixRow0,
         instanceMatrixRow1,
         instanceMatrixRow2,
         instanceMatrixRow3
     );
 
-    gl_Position = viewProjMatrix *  instanceMatrix *  vec4(vertexPosition, 1.0);
+    worldPosition = (instanceModel * vec4(vertexPosition, 1.0)).xyz;
+    worldNormal = mat3(transpose(inverse(instanceModel))) * vertexNormal;
+    gl_Position = viewProjMatrix *  instanceModel *  vec4(vertexPosition, 1.0);
     //TexCoord = inTexCoord;
 }

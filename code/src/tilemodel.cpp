@@ -34,10 +34,12 @@ void TileModel::setMesh(QString filename)
         OFFIO::openTriMesh(filename.toStdString(),
                                      m_mesh.vertices,
                                      m_mesh.triangles);
+        m_mesh.computeNormales();
     }else if (filename.endsWith(".obj")){
         OBJIO::openTriMesh(filename.toStdString(),
                                      m_mesh.vertices,
                                      m_mesh.triangles);
+        m_mesh.computeNormales();
     }
 
     computeBoundingBox();

@@ -40,7 +40,7 @@ void print(const QSet<int>& set) {
 
 void Wfc::initWFC(int k,QVector<TileModel> &modeles){
     if(k>=(m_grid.getX()*m_grid.getY()*m_grid.getZ())){
-        std::cout<<"Taille de la grille : "<<m_grid.getX()*m_grid.getY()*m_grid.getZ()<<" k trop grand"<<std::endl;
+//        std::cout<<"Taille de la grille : "<<m_grid.getX()*m_grid.getY()*m_grid.getZ()<<" k trop grand"<<std::endl;
     }
     //Pondération de la selection aléatoire de modele par la taille de leur rules, i.e, le nombre de voisins possibles
     //Augmente les chances de configuration initiale viable
@@ -65,7 +65,7 @@ void Wfc::initWFC(int k,QVector<TileModel> &modeles){
             randomX=disX(gen);
             randomY=disY(gen);
             randomZ=disZ(gen);
-            //std::cout << "Random Position: (" << randomX << ", " << randomY << ", " << randomZ << ")" << std::endl;
+//            std::cout << "Random Position: (" << randomX << ", " << randomY << ", " << randomZ << ")" << std::endl;
             //Check si cellule choisie random contient deja un objet ou si on l'a déja testée
             if(!m_grid.getCell(randomX,randomY,randomZ).hasMesh&&!cellsDone.contains(QVector3D(randomX,randomY,randomZ))){
                 bool endModelChoice=false;
@@ -156,7 +156,7 @@ void Wfc::initWFC(int k,QVector<TileModel> &modeles){
                         for(int j=0;j<voisins.size();j++){
                             m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).entropy++;
                         }
-                        //std::cout<<"Une instance est mise car pas de regle autour"<<std::endl;
+//                        std::cout<<"Une instance est mise car pas de regle autour"<<std::endl;
 
                     }
                     else{
@@ -180,7 +180,7 @@ void Wfc::initWFC(int k,QVector<TileModel> &modeles){
                                 for(int j=0;j<voisins.size();j++){
                                     m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).entropy++;
                                 }
-                                //std::cout<<"Une instance est mise apres check regle"<<std::endl;
+//                                std::cout<<"Une instance est mise apres check regle"<<std::endl;
                             }
                         }
                     }
@@ -194,7 +194,7 @@ void Wfc::initWFC(int k,QVector<TileModel> &modeles){
             }
         }
     }
-    m_grid.printGrid();
+//    m_grid.printGrid();
 }
 
 void Wfc::runWFC(int k,QVector<TileModel> &modeles){
@@ -309,6 +309,7 @@ void Wfc::runWFC(int k,QVector<TileModel> &modeles){
                 if(possibleModeles.isEmpty()){
                     isSet=false;
                     //std::cout<<"Aucun modele possible"<<std::endl;
+
                 }
                 else{
                     QList<int> list = possibleModeles.toList();
@@ -353,6 +354,7 @@ void Wfc::runWFC(int k,QVector<TileModel> &modeles){
             //Ici supprimer les éléments de la grille
             m_grid.clean();
         }
+
     }
 
 }
