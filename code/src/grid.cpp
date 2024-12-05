@@ -144,7 +144,6 @@ void Grid::render(QOpenGLShaderProgram* program) {
             modeles[i].mesh().vao->release();
         }
     }
-    qDebug() << compteur;
     program->release();
 }
 
