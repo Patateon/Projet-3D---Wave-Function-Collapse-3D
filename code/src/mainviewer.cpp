@@ -118,9 +118,9 @@ void MainViewer::initializeBasicWFC(uint dimension, float spacing) {
 
     for(int i = 0;i<4;i++){
         QSet<int> rules;
-        QVector<bool> x_rot={1,i%2,(i*3)%2,0};
-        QVector<bool> y_rot={1,(i+1)%2,(i*3)%2,0};
-        QVector<bool> z_rot={1,i%2,(i*3+1)%2,0};
+        QVector<bool> x_rot={1,static_cast<bool>(i%2),static_cast<bool>((i*3)%2),0};
+        QVector<bool> y_rot={1,static_cast<bool>((i+1)%2),static_cast<bool>((i*3)%2),0};
+        QVector<bool> z_rot={1,static_cast<bool>(i%2),static_cast<bool>((i*3+1)%2),0};
         rules.insert(std::min(i+1,2));
         if(i!=1){
             rules.insert(std::max(i-1,0));
@@ -199,12 +199,15 @@ void MainViewer::init() {
     glEnable(GL_COLOR_MATERIAL);
 
     //
-    setSceneCenter( qglviewer::Vec( 10 , 10 , 10 ) );
-    setSceneRadius( 20.f );
+    int boxDimension = 10;
+    float boxSpacing = 2.0;
+    float boxSize = (float) boxDimension * boxSpacing;
+
+    setSceneCenter( qglviewer::Vec( boxSize / 2.0 , boxSize / 2.0 , boxSize / 2.0 ) );
+    setSceneRadius( boxSize );
 
     //
-//    initializeRandomGrid(5, 2.0);
-    initializeBasicWFC(5, 2.0);
+    initializeBasicWFC(boxDimension, boxSpacing);
 
     showEntireScene();
 

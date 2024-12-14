@@ -11,7 +11,6 @@ OBJECTS_DIR = ./tmp/obj
 
 # Input
 HEADERS += ./src/point3.h \
-    ../../../Téléchargements/OBJ_Loader.h \
     ./src/Mesh.h \
     ./src/BasicIO.h \
     ./src/gl/GLUtilityMethods.h \
