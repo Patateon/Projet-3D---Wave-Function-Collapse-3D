@@ -1,7 +1,7 @@
 #include "tilemodel.h"
 
 #include "BasicIO.h"
-
+#include "OBJ_Loader.h"
 
 //Ajout de paramtre de rotation possibles pour chaque direction au TileModel pour lorsque l'on set une instance du modele on pioche au hasard dedans.
 //Ensuite quand on set quelque chose a coté il faudra récupérer la rotation du voisin le plus important(voir améliorer regles)
@@ -28,6 +28,49 @@ TileModel::~TileModel(){
 
 }
 
+void TileModel::loadOBJ(QString filename){
+    objl::Loader loader;
+
+    bool loaded = loader.LoadFile(filename.toStdString());
+
+    if(!loaded){
+        qWarning() << "Could not load obj : " << filename;
+        return;
+    }
+    qDebug() << "Current mesh : " << filename;
+
+    if(loader.LoadedMeshes.size() != 1) {
+        qWarning() << "Unexpected number of meshes "
+                   << "from a single file : "
+                   << loader.LoadedMeshes.size();
+    }
+
+    objl::Mesh currentMesh = loader.LoadedMeshes[0];
+
+    m_mesh.vertices.resize(currentMesh.Vertices.size());
+    for(uint i = 0; i < currentMesh.Vertices.size(); i++){
+        m_mesh.vertices[i] = Vertex(currentMesh.Vertices[i].Position.X,
+                                    currentMesh.Vertices[i].Position.Y,
+                                    currentMesh.Vertices[i].Position.Z);
+    }
+
+    m_mesh.normales.resize(currentMesh.Vertices.size());
+    for(uint i = 0; i < currentMesh.Vertices.size(); i++){
+        m_mesh.normales[i] = Vertex(currentMesh.Vertices[i].Normal.X,
+                                    currentMesh.Vertices[i].Normal.Y,
+                                    currentMesh.Vertices[i].Normal.Z);
+    }
+
+    for(uint i = 0; i < currentMesh.Indices.size(); i+=3){
+        Triangle t;
+        t[0] = currentMesh.Indices[i];
+        t[1] = currentMesh.Indices[i+1];
+        t[2] = currentMesh.Indices[i+2];
+        m_mesh.triangles.push_back(t);
+    }
+}
+
+
 void TileModel::setMesh(QString filename)
 {
     if (filename.endsWith(".off")){
@@ -36,10 +79,8 @@ void TileModel::setMesh(QString filename)
                                      m_mesh.triangles);
         m_mesh.computeNormales();
     }else if (filename.endsWith(".obj")){
-        OBJIO::openTriMesh(filename.toStdString(),
-                                     m_mesh.vertices,
-                                     m_mesh.triangles);
-        m_mesh.computeNormales();
+        // Suppose la présence de normales
+        loadOBJ(filename);
     }
 
     computeBoundingBox();

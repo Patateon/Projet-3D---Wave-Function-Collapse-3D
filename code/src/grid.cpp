@@ -75,6 +75,12 @@ void Grid::initializeBuffers(QOpenGLShaderProgram* program) {
         return;
     }
 
+    for(uint i = 0; i < modelPos.size(); i++){
+        qDebug() << "Number of type("
+                 << i <<") = "
+                 << modelPos[i].size();
+    }
+
     initializeOpenGLFunctions();
     program->bind();
 

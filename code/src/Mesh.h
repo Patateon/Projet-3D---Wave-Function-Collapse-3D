@@ -124,11 +124,6 @@ struct Mesh{
 
     void initVAO(QOpenGLShaderProgram* program) {
 
-        if (vertices.empty() || triangles.empty()){
-            qWarning() << "No vertices or triangles!";
-            return;
-        }
-
         program->bind();
 
         vao = new QOpenGLVertexArrayObject();

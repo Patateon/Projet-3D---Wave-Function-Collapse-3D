@@ -23,6 +23,7 @@ public:
     // Mesh file handling
     void setMesh(Mesh *mesh) {m_mesh = *mesh;}
     void setMesh(QString filename);
+    void loadOBJ(QString filename);
 
     void computeBoundingBox();
     QSet<int> getRules();

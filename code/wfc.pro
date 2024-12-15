@@ -16,7 +16,7 @@ HEADERS += ./src/point3.h \
     ./src/gl/GLUtilityMethods.h \
     ./src/gl/BasicColors.h \
     ./src/tilemodel.h \
-    extern/objloader/OBJ_Loader.h \
+    src/OBJ_Loader.h \
     src/mainviewer.h \
     src/material.h \
     src/tileinstance.h \

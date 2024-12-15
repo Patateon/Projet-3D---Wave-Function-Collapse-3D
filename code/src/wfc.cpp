@@ -344,7 +344,7 @@ void Wfc::runWFC(int k,QVector<TileModel> &modeles){
                 isFull=true;
             }
             //m_grid.printGrid();
-            std::cout<<isFull<<std::endl;
+            // std::cout<<isFull<<std::endl;
         }
         if(isFull){
             std::cout<<"Fin apres "<<i<<" iterations"<<std::endl;

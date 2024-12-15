@@ -87,14 +87,15 @@ void MainViewer::initializeRandomGrid(uint dimension, float spacing) {
 }
 
 void MainViewer::initializeBasicWFC(uint dimension, float spacing) {
-    QString modelPath1 = QString("models/sphere.off");
-    QString modelPath2 = QString("models/arma.off");
-    QString modelPath3 = QString("models/monkey.off");
+    QString modelPath1 = QString("models/tiles/empty.obj");
+    QString modelPath2 = QString("models/tiles/stair.obj");
+    QString modelPath3 = QString("models/tiles/slab.obj");
+    QString modelPath4 = QString("models/tiles/anti_corner_stair.obj");
 
     TileModel model1 = TileModel(0, modelPath1);
     TileModel model2 = TileModel(1, modelPath2);
-    TileModel model3 = TileModel(2, modelPath1);
-    TileModel model4 = TileModel(3, modelPath3);
+    TileModel model3 = TileModel(2, modelPath3);
+    TileModel model4 = TileModel(3, modelPath4);
 
     QVector<TileModel> modeles;
     modeles.append(model1);
@@ -198,8 +199,8 @@ void MainViewer::init() {
     glEnable(GL_COLOR_MATERIAL);
 
     //
-    int boxDimension = 3;
-    float boxSpacing = 2.2;
+    int boxDimension = 4;
+    float boxSpacing = 2.0;
     float boxSize = (float) boxDimension * boxSpacing;
 
     setSceneCenter( qglviewer::Vec( boxSize / 2.0 , boxSize / 2.0 , boxSize / 2.0 ) );
