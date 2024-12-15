@@ -323,11 +323,11 @@ void Wfc::runWFC(int k,QVector<TileModel> &modeles){
                     float x_deg,y_deg,z_deg=0;
 
                     for(int j=0;j<voisins.size();j++){
-                        std::cout<<"zone de bug"<<std::endl;
+                        // std::cout<<"zone de bug"<<std::endl;
                         if(m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).hasMesh&&m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).object.tileModel()->getType()==1){
                             m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).object.transform().rotation().getEulerAngles(&x_deg,&y_deg,&z_deg);
                         }
-                        std::cout<<"fin zone de bug"<<std::endl;
+                        // std::cout<<"fin zone de bug"<<std::endl;
                     }
                     m_grid.setObject(instance,randomX,randomY,randomZ,0,0,0);
                     isSet=true;

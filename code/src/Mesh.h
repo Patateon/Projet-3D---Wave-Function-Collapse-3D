@@ -101,9 +101,8 @@ struct Mesh{
 
         for(unsigned int tIt = 0; tIt < triangles.size(); tIt+=3) {
             Triangle t = triangles[tIt];
-            point3d n_t = point3d::cross(
-                                         vertices[t[2]].p - vertices[t[0]].p,
-                                         vertices[t[1]].p - vertices[t[0]].p);
+            point3d n_t = point3d::cross(vertices[t[1]].p - vertices[t[0]].p,
+                                         vertices[t[2]].p - vertices[t[0]].p);
             normales[ t[0] ].p += n_t;
             normales[ t[1] ].p += n_t;
             normales[ t[2] ].p += n_t;
@@ -150,6 +149,7 @@ struct Mesh{
         vbo_vertex->setUsagePattern(QOpenGLBuffer::StaticDraw);
         vbo_vertex->allocate(
                     vertices.data(), vertices.size() * sizeof(point3d));
+        vbo_vertex->release();
 
         vbo_normales = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
         if (!vbo_normales->create()){
@@ -184,10 +184,12 @@ struct Mesh{
         vbo_triangles->allocate(
                     triangles.data(), triangles.size() * 3 * sizeof(uint));
 
+        vbo_vertex->bind();
         program->enableAttributeArray(0);
         program->setAttributeBuffer(
                     0, GL_DOUBLE, offsetof(Vertex, p), 3, sizeof(Vertex));
 
+        vbo_normales->bind();
         program->enableAttributeArray(1);
         program->setAttributeBuffer(
                     1, GL_DOUBLE, offsetof(Vertex, p), 3, sizeof(Vertex));

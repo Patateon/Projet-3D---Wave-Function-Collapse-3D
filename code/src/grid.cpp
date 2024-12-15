@@ -56,10 +56,10 @@ void Grid::setObject(TileInstance object,int x,int y,int z,float x_deg,float y_d
     QVector3D translate(x*dimX, y*dimY, z*dimZ);
     translate = BBmin + translate;
 
-    cell.object.transform().scale() = QVector3D(1.0f, 1.0f, 1.0f);
+    cell.object.transform().scale() = scale;
     cell.object.transform().translation() = translate;
     QQuaternion rotation = QQuaternion::fromEulerAngles(QVector3D(x_deg,y_deg,z_deg));
-    cell.object.transform().rotation()=rotation;
+    cell.object.transform().rotation() = rotation;
 
     //On met a jour commme ca pour l'instant
     QMatrix4x4 matrix = cell.object.transform().getLocalModel();
@@ -71,7 +71,7 @@ void Grid::setObject(TileInstance object,int x,int y,int z,float x_deg,float y_d
 void Grid::initializeBuffers(QOpenGLShaderProgram* program) {
 
     if (modelPos.size() != modelMatrixes.size()) {
-        qDebug() << "Error: modelPos and modelMatrixes size mismatch!";
+        qWarning() << "Error: modelPos and modelMatrixes size mismatch!";
         return;
     }
 
