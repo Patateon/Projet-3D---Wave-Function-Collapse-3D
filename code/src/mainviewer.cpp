@@ -54,8 +54,8 @@ void MainViewer::initializeRandomGrid(uint dimension, float spacing) {
     QString modelPath3 = QString("models/monkey.off");
 
     TileModel model1 = TileModel(0, modelPath1);
-    TileModel model2 = TileModel(1, modelPath3);
-    TileModel model3 = TileModel(2, modelPath3);
+    TileModel model2 = TileModel(1, modelPath1);
+    TileModel model3 = TileModel(2, modelPath1);
     TileModel model4 = TileModel(3, modelPath1);
 
     QVector<TileModel> modeles;
@@ -78,7 +78,7 @@ void MainViewer::initializeRandomGrid(uint dimension, float spacing) {
             for (uint z = 0; z < dimension; z++){
                 int model = rand()%2;
                 TileInstance instance = TileInstance(&modeles[model]);
-                grid->setObject(instance, x, y, z,0,0,0);
+                grid->setObject(instance, x, y, z, 0, 0, 0);
             }
         }
     }
@@ -87,15 +87,14 @@ void MainViewer::initializeRandomGrid(uint dimension, float spacing) {
 }
 
 void MainViewer::initializeBasicWFC(uint dimension, float spacing) {
-    QString modelPath1 = QString("models/monkey.off");
+    QString modelPath1 = QString("models/sphere.off");
     QString modelPath2 = QString("models/arma.off");
     QString modelPath3 = QString("models/monkey.off");
 
     TileModel model1 = TileModel(0, modelPath1);
-    TileModel model2 = TileModel(1, modelPath3);
+    TileModel model2 = TileModel(1, modelPath2);
     TileModel model3 = TileModel(2, modelPath1);
-    TileModel model4 = TileModel(3, modelPath1);
-
+    TileModel model4 = TileModel(3, modelPath3);
 
     QVector<TileModel> modeles;
     modeles.append(model1);
@@ -199,8 +198,8 @@ void MainViewer::init() {
     glEnable(GL_COLOR_MATERIAL);
 
     //
-    int boxDimension = 10;
-    float boxSpacing = 2.0;
+    int boxDimension = 3;
+    float boxSpacing = 2.2;
     float boxSize = (float) boxDimension * boxSpacing;
 
     setSceneCenter( qglviewer::Vec( boxSize / 2.0 , boxSize / 2.0 , boxSize / 2.0 ) );
@@ -215,6 +214,12 @@ void MainViewer::init() {
 
 void MainViewer::draw() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    if (m_wired) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }else {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
 
     QMatrix4x4 viewMatrix;
     QMatrix4x4 projectionMatrix;
@@ -272,6 +277,9 @@ void MainViewer::updateTitle( QString text ) {
 */
 
 void MainViewer::keyPressEvent( QKeyEvent * event ) {
+    if( event->key() == Qt::Key_W) {
+        m_wired = !m_wired;
+    }
     if( event->key() == Qt::Key_H ) {
         help();
     }
@@ -391,10 +399,10 @@ void MainViewer::openCameraFromFile(const QString &filename){
     qglviewer::Vec up;
     float fov;
 
-    file >> (pos[0]) >> (pos[1]) >> (pos[2]) >>
-                                                (view[0]) >> (view[1]) >> (view[2]) >>
-                                                                                       (up[0]) >> (up[1]) >> (up[2]) >>
-                                                                                                                        fov;
+    file >> (pos[0]) >> (pos[1]) >> (pos[2])
+         >> (view[0]) >> (view[1]) >> (view[2])
+         >> (up[0]) >> (up[1]) >> (up[2])
+         >> fov;
 
     camera()->setPosition(pos);
     camera()->setViewDirection(view);

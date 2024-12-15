@@ -30,5 +30,5 @@ void main()
 
     vec3 ouput_color = ((ambient + diffuse) * materialColor);
 
-    fragmentColor = vec4(ouput_color, 0.0);
+    fragmentColor = vec4(ouput_color, 1.0);
 }

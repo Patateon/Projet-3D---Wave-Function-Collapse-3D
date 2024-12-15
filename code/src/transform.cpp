@@ -11,9 +11,9 @@ QMatrix4x4 Transform::getLocalModel(){
     // Compute local model matrix by applying
     // Scale then Rotation then Translation
 
-    m_model.scale(m_scale);
     m_model.translate(m_translation);
     m_model.rotate(m_rotation);
+    m_model.scale(m_scale);
 
     return m_model;
 }
