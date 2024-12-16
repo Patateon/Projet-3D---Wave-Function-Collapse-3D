@@ -256,3 +256,37 @@ bool Grid::isTypeClose(int x, int y, int z, uint type) {
     }
     return false;
 }
+
+void removeElementFromVec(QVector<QVector3D>& vec, const QVector3D& toRemove) {
+    for(int i=0;i<3;i++){
+        int index = vec.indexOf(toRemove);
+        if (index != -1)
+            vec.removeAt(index);
+    }
+}
+void Grid::createRules(){//Créer les règles a partir d'une grille contenant juste des tilemodels sans regles
+    //Regles de type sont automatiques selon le nombre de voisins par rapport a la taille de modeles
+    for(int x = 0;x<resX;x++){
+        for(int y = 0;y<resY;y++){
+            for(int z = 0;z<resZ;z++){
+                if(getCell(x,y,z).hasMesh){
+                    QSet<int> rules = modeles[getCell(x,y,z).object.tileModel()->id()].getRules();
+                    QVector<QVector3D> voisins;
+                    voisins.push_back(QVector3D(std::min(x+1,resX-1),y,z));
+                    voisins.push_back(QVector3D(std::max(x-1,0),y,z));
+                    voisins.push_back(QVector3D(x,std::min(y+1,resY-1),z));
+                    voisins.push_back(QVector3D(x,std::max(y-1,0),z));
+                    voisins.push_back(QVector3D(x,y,std::min(z+1,resZ-1)));
+                    voisins.push_back(QVector3D(x,y,std::max(z-1,0)));
+                    removeElementFromVec(voisins,QVector3D(x,y,z));
+                    for(int i = 0;i<voisins.size();i++){
+                        rules.insert(getCell(voisins[i].x(),voisins[i].y(),voisins[i].z()).object.tileModel()->id());
+                    }
+                    modeles[getCell(x,y,z).object.tileModel()->id()].setRules(rules);
+                }
+            }
+        }
+    }
+}
+
+

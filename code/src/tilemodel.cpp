@@ -94,7 +94,7 @@ QSet<int> TileModel::getRules(){
     return m_rules;
 }
 
-void TileModel::setType(QVector<TileModel> modeles){
+void TileModel::setType(QVector<TileModel> &modeles){
     if(m_rules.size()<=modeles.size()/3){
         m_type=1;
     }

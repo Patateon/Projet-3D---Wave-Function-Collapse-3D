@@ -33,7 +33,7 @@ public:
     QVector<bool> getZRot();
     void setRots(QVector<bool> rotx,QVector<bool> roty,QVector<bool> rotz);
     int getType();
-    void setType(QVector<TileModel> modeles);
+    void setType(QVector<TileModel> &modeles);
     bool operator<(const TileModel & other) const;
 private:
     uint m_id;

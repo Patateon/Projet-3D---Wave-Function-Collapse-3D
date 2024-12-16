@@ -36,7 +36,7 @@ public:
     void clean();
   
     bool isTypeClose(int x, int y, int z, uint type);
-
+    void createRules();
     // Debug Functions
     void drawNormales(QOpenGLShaderProgram* program);
     void printGrid();
