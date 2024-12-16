@@ -318,18 +318,51 @@ void Wfc::runWFC(int k,QVector<TileModel> &modeles){
                     std::uniform_int_distribution<> disModele(0,list.size()-1);
                     int randomModel=disModele(gen);
                     Transform transform;//si type 1 dans 6 voisinage copier la rotation de celui ci et la mettre sur ca
-                    TileInstance instance(&modeles[list[randomModel]], transform);//Ajout rotation au hasad parmi m_x m_y m_z niveau transform
+                    TileModel model=modeles[list[randomModel]];
+                    TileInstance instance(&model, transform);//Ajout rotation au hasad parmi m_x m_y m_z niveau transform
                     //std::cout<<"Modele choisi : " << randomModel<<" "<<modeles[list[randomModel]].id()<<std::endl;
                     float x_deg,y_deg,z_deg=0;
-
+                    bool hasType1=false;
+                    int voisinIndex;
                     for(int j=0;j<voisins.size();j++){
                         // std::cout<<"zone de bug"<<std::endl;
                         if(m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).hasMesh&&m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).object.tileModel()->getType()==1){
-                            m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).object.transform().rotation().getEulerAngles(&x_deg,&y_deg,&z_deg);
+                            hasType1=true;
+                            voisinIndex=j;
                         }
                         // std::cout<<"fin zone de bug"<<std::endl;
                     }
-                    m_grid.setObject(instance,randomX,randomY,randomZ,0,0,0);
+                    if(hasType1){
+                        m_grid.getCell(voisins[voisinIndex].x(),voisins[voisinIndex].y(),voisins[voisinIndex].z()).object.transform().rotation().getEulerAngles(&x_deg,&y_deg,&z_deg);
+                    }
+                    else{
+                        QVector<bool> x_rot =model.getXRot();//indice 0 = 0 degré , 1 90 , 2 180 , 3 270, fin
+                        QVector<bool> y_rot =model.getYRot();
+                        QVector<bool> z_rot =model.getZRot();
+                        QVector<int> x_possible_rot;
+                        QVector<int> y_possible_rot;
+                        QVector<int> z_possible_rot;
+                        //rotations possibles véritables
+                        for(int j=0;j<4;j++){
+                            if(x_rot[j]==1){
+                                x_possible_rot.push_back(j*90);
+                            }
+                            if(y_rot[j]==1){
+                                y_possible_rot.push_back(j*90);
+                            }
+                            if(z_rot[j]==1){
+                                z_possible_rot.push_back(j*90);
+                            }
+                        }
+                        //Choix au hasard d'une rotation pour le modèle;
+                        std::uniform_int_distribution<> disRotX(0,x_possible_rot.size()-1);
+                        std::uniform_int_distribution<> disRotY(0,y_possible_rot.size()-1);
+                        std::uniform_int_distribution<> disRotZ(0,z_possible_rot.size()-1);
+                        x_deg=x_possible_rot[disRotX(gen)];
+                        y_deg=x_possible_rot[disRotY(gen)];
+                        z_deg=x_possible_rot[disRotZ(gen)];
+                    }
+                    m_grid.setObject(instance,randomX,randomY,randomZ,x_deg,y_deg,z_deg);
                     isSet=true;
                     for(int j=0;j<voisins.size();j++){
                         m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).entropy++;
