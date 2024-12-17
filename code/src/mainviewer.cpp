@@ -9,19 +9,10 @@ void MainViewer::add_actions_to_toolBar(QToolBar *toolBar)
 {
     // Specify the actions :
     DetailedAction * open_mesh = new DetailedAction( QIcon("./icons/open.png") , "Open Mesh" , "Open Mesh" , this , this , SLOT(open_mesh()) );
-    DetailedAction * save_mesh = new DetailedAction( QIcon("./icons/save.png") , "Save model" , "Save model" , this , this , SLOT(save_mesh()) );
-    DetailedAction * help = new DetailedAction( QIcon("./icons/help.png") , "HELP" , "HELP" , this , this , SLOT(help()) );
-    DetailedAction * saveCamera = new DetailedAction( QIcon("./icons/camera.png") , "Save camera" , "Save camera" , this , this , SLOT(saveCamera()) );
-    DetailedAction * openCamera = new DetailedAction( QIcon("./icons/open_camera.png") , "Open camera" , "Open camera" , this , this , SLOT(openCamera()) );
-    DetailedAction * saveSnapShotPlusPlus = new DetailedAction( QIcon("./icons/save_snapshot.png") , "Save snapshot" , "Save snapshot" , this , this , SLOT(saveSnapShotPlusPlus()) );
-
+    DetailedAction * create_init_grid = new DetailedAction( QIcon("./icons/rubik.png") , "Create initialization grid" , "Create initialization grid" , this , this , SLOT(create_initialization_grid()) );
     // Add them :
     toolBar->addAction( open_mesh );
-    toolBar->addAction( save_mesh );
-    toolBar->addAction( help );
-    toolBar->addAction( saveCamera );
-    toolBar->addAction( openCamera );
-    toolBar->addAction( saveSnapShotPlusPlus );
+    toolBar->addAction( create_init_grid);
 }
 
 void MainViewer::pickBackgroundColor() {
@@ -90,7 +81,7 @@ void MainViewer::initializeBasicWFC(uint dimension, float spacing) {
     QString modelPath1 = QString("models/tiles/empty.obj");
     QString modelPath2 = QString("models/tiles/stair.obj");
     QString modelPath3 = QString("models/tiles/slab.obj");
-    QString modelPath4 = QString("models/tiles/anti_corner_stair.obj");
+    QString modelPath4 = QString("models/monkey.off");
 
     TileModel model1 = TileModel(0, modelPath1);
     TileModel model2 = TileModel(1, modelPath2);
@@ -137,6 +128,15 @@ void MainViewer::initializeBasicWFC(uint dimension, float spacing) {
     wfc->runWFC(20, modeles);
 
     grid->initializeBuffers(program);
+}
+
+void MainViewer::initGrid(uint dimension, float spacing){
+    grid = new Grid(dimension, dimension, dimension,
+                    spacing, spacing, spacing,
+                    QVector3D(spacing/2.0, spacing/2.0, spacing/2.0), 4);
+    grid->generateGridLines();
+    grid->setModeles(m_modeles);
+
 }
 
 void MainViewer::initializeProgramShader() {
@@ -198,16 +198,8 @@ void MainViewer::init() {
 
     glEnable(GL_COLOR_MATERIAL);
 
-    //
-    int boxDimension = 4;
-    float boxSpacing = 2.0;
-    float boxSize = (float) boxDimension * boxSpacing;
+    //initializeBasicWFC(3, 1);
 
-    setSceneCenter( qglviewer::Vec( boxSize / 2.0 , boxSize / 2.0 , boxSize / 2.0 ) );
-    setSceneRadius( boxSize );
-
-    //
-    initializeBasicWFC(boxDimension, boxSpacing);
 
     showEntireScene();
 
@@ -228,7 +220,6 @@ void MainViewer::draw() {
     camera()->getModelViewMatrix(viewMatrix.data());
     camera()->getProjectionMatrix(projectionMatrix.data());
 
-    QMatrix4x4 model = QMatrix4x4();
     QMatrix4x4 viewProjection = projectionMatrix * viewMatrix; // OpenGL : Projection * View
     qglviewer::Vec qglCameraPosition = camera()->position();
     QVector3D cameraPosition = QVector3D(qglCameraPosition.x,
@@ -244,6 +235,33 @@ void MainViewer::draw() {
     grid->render(program);
 
     program->release();
+    QOpenGLShaderProgram *lineProgram = new QOpenGLShaderProgram();
+    if (!lineProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/line.vert")) {
+        qCritical() << "Vertex shader compilation failed:" << lineProgram->log();
+        return;
+    }
+    if (!lineProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/line.frag")) {
+        qCritical() << "Fragment shader compilation failed:" << lineProgram->log();
+        return;
+    }
+    if (!lineProgram->link()) {
+        qCritical() << "Shader program link failed:" << lineProgram->log();
+        return;
+    }
+
+    lineProgram->link();
+    camera()->getProjectionMatrix(projectionMatrix.data());
+    camera()->getModelViewMatrix(viewMatrix.data());
+    QMatrix4x4 model = QMatrix4x4();
+
+    lineProgram->setUniformValue("projectionMatrix", projectionMatrix);  // Matrice de projection
+    lineProgram->setUniformValue("viewMatrix", viewMatrix);              // Matrice de vue
+    lineProgram->setUniformValue("modelMatrix", model);
+    grid->drawGridLines(lineProgram);
+
+
+
+    delete lineProgram;
 }
 
 /*
@@ -340,6 +358,12 @@ void MainViewer::open_mesh() {
             success = OBJIO::openTriMesh(fileName.toStdString() , mesh.vertices , mesh.triangles );
         if(success) {
             std::cout << fileName.toStdString() << " was opened successfully" << std::endl;
+            TileModel modele(m_modeles.size(),fileName);
+            m_modeles.push_back(modele);
+            for(int i = 0 ;i<m_modeles.size();i++){
+                qDebug()<<m_modeles[i].mesh().vertices.size();
+            }
+            /*
             point3d bb(FLT_MAX,FLT_MAX,FLT_MAX) , BB(-FLT_MAX,-FLT_MAX,-FLT_MAX);
             for( unsigned int v = 0 ; v < mesh.vertices.size() ; ++v ) {
                 bb = point3d::min(bb , mesh.vertices[v]);
@@ -347,12 +371,37 @@ void MainViewer::open_mesh() {
             }
             adjustCamera(bb,BB);
             update();
-            mesh.initVAO(program);
+            mesh.initVAO(program);*/
         }
         else
             std::cout << fileName.toStdString() << " could not be opened" << std::endl;
     }
 }
+
+void MainViewer::create_initialization_grid() {
+    bool ok;
+    QInputDialog *inputDialog = new QInputDialog(this);
+    inputDialog->setLabelText(tr("Entrer la résolution de la grille :"));
+    inputDialog->setTextValue(QString::number(0));
+    inputDialog->setDoubleRange(-10000, 10000);
+    inputDialog->setDoubleDecimals(2);
+    inputDialog->resize(400, 200);
+    double value1 = inputDialog->getDouble(this, tr("Résolution de la grille"), tr("Résolution :"), 0, 0, 1000, 2, &ok);
+    if (ok) {
+        inputDialog->setLabelText(tr("Entrer la taille des cellules :"));
+        double value2 = inputDialog->getDouble(this, tr("Taille des cellules"), tr("Taille de cellule :"), 0, 0, 100, 2, &ok);
+        if (ok) {
+            initGrid(value1,value2);
+            float boxSize = (float) value1 * value2;
+            setSceneCenter( qglviewer::Vec( boxSize / 2.0 , boxSize / 2.0 , boxSize / 2.0 ) );
+            setSceneRadius( boxSize );
+            show();
+        }
+    }
+    delete inputDialog;
+    //Faire apparaitre la grid vide et menu a droite pour choix de modele et tout
+}
+
 
 void MainViewer::save_mesh() {
     bool success = false;
@@ -438,4 +487,16 @@ void MainViewer::saveSnapShotPlusPlus(){
         saveSnapshot( fileName );
         saveCameraInFile( fileName+QString(".cam") );
     }
+}
+
+/*
+ * Nécessaires pour load les modeles pour ini
+ */
+
+QVector<TileModel> MainViewer::getModeles(){
+    return m_modeles;
+}
+
+void MainViewer::setModeles(QVector<TileModel> modeles){
+    m_modeles=modeles;
 }

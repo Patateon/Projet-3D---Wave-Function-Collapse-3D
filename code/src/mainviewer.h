@@ -55,6 +55,7 @@ private :
     bool m_display_normal = true;
 
     bool m_wired = false;
+    QVector<TileModel> m_modeles;
 
 public :
 
@@ -70,7 +71,7 @@ public :
     void initializeGrid();
     void initializeRandomGrid(uint dimension, float spacing);
     void initializeBasicWFC(uint dimension, float spacing);
-
+    void initGrid(uint dimension,float spacing);
     void initializeProgramShader();
     void initializeShaders();
 
@@ -87,11 +88,17 @@ public :
     void mouseMoveEvent(QMouseEvent* e  ) override;
     void mouseReleaseEvent(QMouseEvent* e  ) override;
 
+    QVector<TileModel> getModeles();
+    void setModeles(QVector<TileModel> modeles);
+
+
 signals:
     void windowTitleUpdated( const QString & );
 
 public slots:
     void open_mesh();
+    void create_initialization_grid();
+
     void save_mesh();
 
     void showControls();

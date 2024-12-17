@@ -256,3 +256,51 @@ bool Grid::isTypeClose(int x, int y, int z, uint type) {
     }
     return false;
 }
+
+void Grid::generateGridLines() {
+    gridLines.clear();
+    for (int x = 0; x <= resX; ++x) {
+        for (int y = 0; y <= resY; ++y) {
+            for (int z = 0; z <= resZ; ++z) {
+                if (x < resX) {
+                    gridLines.push_back(QVector3D(x * dimX, y * dimY, z * dimZ));
+                    gridLines.push_back(QVector3D((x + 1) * dimX, y * dimY, z * dimZ));
+                }
+                if (y < resY) {
+                    gridLines.push_back(QVector3D(x * dimX, y * dimY, z * dimZ));
+                    gridLines.push_back(QVector3D(x * dimX, (y + 1) * dimY, z * dimZ));
+                }
+                if (z < resZ) {
+                    gridLines.push_back(QVector3D(x * dimX, y * dimY, z * dimZ));
+                    gridLines.push_back(QVector3D(x * dimX, y * dimY, (z + 1) * dimZ));
+                }
+            }
+        }
+    }
+
+
+}
+
+void Grid::drawGridLines(QOpenGLShaderProgram* program) {
+    initializeOpenGLFunctions();
+
+    GLuint lineVBO;
+    glGenBuffers(1, &lineVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
+    glBufferData(GL_ARRAY_BUFFER, gridLines.size() * sizeof(QVector3D), gridLines.data(), GL_STATIC_DRAW);
+
+    program->bind();
+
+    GLuint posLoc = program->attributeLocation("position");
+    glEnableVertexAttribArray(posLoc);
+    glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+    glDrawArrays(GL_LINES, 0, gridLines.size());
+
+    glDisableVertexAttribArray(posLoc);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glDeleteBuffers(1, &lineVBO);
+
+    program->release();
+}
+

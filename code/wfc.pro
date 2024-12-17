@@ -63,5 +63,7 @@ release:QMAKE_CFLAGS_RELEASE += -O3 \
 
 DISTFILES += \
     shaders/gshader.glsl \
+    shaders/line.frag \
+    shaders/line.vert \
     src/shader/fshader.glsl \
     src/shader/vshader.glsl

@@ -15,6 +15,7 @@ struct Cell {
 };
 
 class Grid : protected QOpenGLFunctions_4_5_Core {
+    std::vector<QVector3D> gridLines;
 public:
     Grid();
     Grid(int X, int Y, int Z, float dim_x, float dim_y, float dim_z, QVector3D bbMin,int nModel);
@@ -40,6 +41,9 @@ public:
     // Debug Functions
     void drawNormales(QOpenGLShaderProgram* program);
     void printGrid();
+
+    void generateGridLines();
+    void drawGridLines(QOpenGLShaderProgram* program);
 
 private:
     QVector3D BBmin;

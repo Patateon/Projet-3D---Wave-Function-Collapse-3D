@@ -17,6 +17,7 @@ int main( int argc , char** argv )
     QApplication app( argc , argv );
 
     MainViewer * viewer = new MainViewer;
+    viewer->hide();
 
     QMainWindow * mainWindow = new QMainWindow;
     QToolBar * toolBar = new QToolBar;
