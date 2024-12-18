@@ -28,6 +28,12 @@
 #include <QLineEdit>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLFunctions>
+#include <QSplitter>
+#include <QListWidget>
+#include <QMainWindow>
+#include <QPushButton>
+#include <QApplication>
+#include <QDesktopWidget>
 
 #include "qt/QSmartAction.h"
 #include "grid.h"
@@ -53,14 +59,14 @@ class MainViewer : public QGLViewer , public QOpenGLFunctions_4_3_Core
 private :
     float m_scale_normal = 1.0;
     bool m_display_normal = true;
-
+    QMainWindow *m_mainWindow;
     bool m_wired = false;
     QVector<TileModel> m_modeles;
+    QListWidget *modelList;
 
 public :
 
-    MainViewer(QGLWidget * parent = NULL) : QGLViewer(parent) , QOpenGLFunctions_4_3_Core() {
-    }
+    explicit MainViewer(QGLWidget *parent = nullptr);
     ~MainViewer();
 
     void add_actions_to_toolBar(QToolBar *toolBar);
@@ -91,6 +97,8 @@ public :
     QVector<TileModel> getModeles();
     void setModeles(QVector<TileModel> modeles);
 
+    void setMainWindow(QMainWindow *mainWindow);
+
 
 signals:
     void windowTitleUpdated( const QString & );
@@ -103,13 +111,10 @@ public slots:
 
     void showControls();
 
-    void saveCameraInFile(const QString &filename);
-    void openCameraFromFile(const QString &filename);
-
-    void openCamera();
-    void saveCamera();
-
-    void saveSnapShotPlusPlus();
+    void onModelDoubleClicked(QListWidgetItem *item);
+    void onOrientationButtonClicked(int modelIndex, const QString &axis, int angle);
+    void updateButtonColor(QPushButton *button, const QString &axis, int angle, const QVector<bool> &rotx, const QVector<bool> &roty, const QVector<bool> &rotz);
+    void updateButtonColors(const QVector<bool> &rotx, const QVector<bool> &roty, const QVector<bool> &rotz);
 };
 
 #endif // MAINVIEWER_H

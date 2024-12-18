@@ -3,6 +3,7 @@
 
 #include "Mesh.h"
 #include "transform.h"
+#include <QFileInfo>
 
 class TileModel
 {
@@ -35,7 +36,9 @@ public:
     int getType();
     void setType(QVector<TileModel> modeles);
     bool operator<(const TileModel & other) const;
+    QString getName();
 private:
+    QString m_name;
     uint m_id;
     Mesh m_mesh;
     QSet<int> m_rules;//Contient les indices de modele autorisé dans les cellules adjacentes

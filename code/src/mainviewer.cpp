@@ -1,5 +1,11 @@
 #include "mainviewer.h"
 
+MainViewer::MainViewer(QGLWidget * parent) : QGLViewer(parent), QOpenGLFunctions_4_3_Core() {
+    // Vérifiez que vous avez un layout défini
+    if (!layout()) {
+        setLayout(new QVBoxLayout());  // Ajoutez un layout pour gérer les widgets
+    }
+}
 MainViewer::~MainViewer(){
     mesh.clear();
     delete program;
@@ -391,16 +397,166 @@ void MainViewer::create_initialization_grid() {
         inputDialog->setLabelText(tr("Entrer la taille des cellules :"));
         double value2 = inputDialog->getDouble(this, tr("Taille des cellules"), tr("Taille de cellule :"), 0, 0, 100, 2, &ok);
         if (ok) {
-            initGrid(value1,value2);
-            float boxSize = (float) value1 * value2;
-            setSceneCenter( qglviewer::Vec( boxSize / 2.0 , boxSize / 2.0 , boxSize / 2.0 ) );
-            setSceneRadius( boxSize );
+            initGrid(value1, value2);
+            float boxSize = (float)value1 * value2;
+            setSceneCenter(qglviewer::Vec(boxSize / 2.0, boxSize / 2.0, boxSize / 2.0));
+            setSceneRadius(boxSize);
             show();
+            QDialog *dialog = new QDialog(this);
+            dialog->setWindowTitle("Liste des modèles");
+            dialog->setModal(false);
+            QVBoxLayout *layout = new QVBoxLayout(dialog);
+
+            modelList = new QListWidget(dialog); // Assignez à la variable membre
+            modelList->setMinimumWidth(200);
+            modelList->setMinimumHeight(200);
+
+            for (int i = 0; i < m_modeles.size(); ++i) {
+                modelList->addItem(m_modeles[i].getName());
+            }
+            connect(modelList, &QListWidget::itemDoubleClicked, this, &MainViewer::onModelDoubleClicked);
+            layout->addWidget(modelList);
+            dialog->resize(300, 300);
+            dialog->show();
         }
     }
     delete inputDialog;
-    //Faire apparaitre la grid vide et menu a droite pour choix de modele et tout
 }
+
+void MainViewer::onModelDoubleClicked(QListWidgetItem *item) {
+    if (!m_mainWindow) {
+        qWarning() << "m_mainWindow is not initialized!";
+        return;
+    }
+
+    // Trouver l'index du modèle correspondant à l'item cliqué
+    int modelIndex = modelList->row(item);
+    if (modelIndex == -1) {
+        qWarning() << "Model not found!";
+        return;
+    }
+
+    // Créer une nouvelle fenêtre (QDialog) pour afficher les boutons
+    QDialog *dialog = new QDialog(m_mainWindow);
+    dialog->setWindowTitle("Sélectionner les orientations possibles : ");
+    dialog->setModal(true);  // Optionnel : mettre le dialogue en modal (bloque l'interface principale)
+
+    // Créer un layout pour les boutons
+    QGridLayout *gridLayout = new QGridLayout(dialog);
+
+    // Liste des orientations
+    QList<QPair<QString, int>> orientations = {
+        {"x", 90}, {"x", 180}, {"x", 270},
+        {"y", 90}, {"y", 180}, {"y", 270},
+        {"z", 90}, {"z", 180}, {"z", 270}
+    };
+
+    // Préparer les vecteurs de rotation initiaux
+    TileModel &model = m_modeles[modelIndex];
+    QVector<bool> rotx = model.getXRot();  // Supposez que vous avez des getters appropriés
+    QVector<bool> roty = model.getYRot();
+    QVector<bool> rotz = model.getZRot();
+
+    // Créer les boutons et les connecter au slot
+    for (int i = 0; i < orientations.size(); ++i) {
+        QString axis = orientations[i].first;
+        int angle = orientations[i].second;
+        QString buttonText = QString("%1: %2").arg(axis).arg(angle);
+        QPushButton *button = new QPushButton(buttonText, dialog);
+        connect(button, &QPushButton::clicked, this, [=]() {
+            onOrientationButtonClicked(modelIndex, axis, angle);
+        });
+        gridLayout->addWidget(button, i / 3, i % 3);
+
+        // Mettre à jour la couleur initiale du bouton
+        updateButtonColor(button, axis, angle, rotx, roty, rotz);
+    }
+
+    dialog->resize(300, 200);
+    QRect screenGeometry = QApplication::desktop()->availableGeometry();
+    int x = (screenGeometry.width() - dialog->width()) / 2;
+    int y = (screenGeometry.height() - dialog->height()) / 2;
+    dialog->move(x, y);
+    dialog->show();
+}
+
+void MainViewer::onOrientationButtonClicked(int modelIndex, const QString &axis, int angle) {
+    // Accéder au modèle correspondant
+    TileModel &model = m_modeles[modelIndex];
+
+    // Préparer les vecteurs de rotation
+    QVector<bool> rotx = model.getXRot();
+    QVector<bool> roty = model.getYRot();
+    QVector<bool> rotz = model.getZRot();
+
+    // Appliquer la rotation choisie
+    if (axis == "x") {
+        if (angle == 90) rotx[0] = !rotx[0];
+        else if (angle == 180) rotx[1] = !rotx[1];
+        else if (angle == 270) rotx[2] = !rotx[2];
+    } else if (axis == "y") {
+        if (angle == 90) roty[0] = !roty[0];
+        else if (angle == 180) roty[1] = !roty[1];
+        else if (angle == 270) roty[2] = !roty[2];
+    } else if (axis == "z") {
+        if (angle == 90) rotz[0] = !rotz[0];
+        else if (angle == 180) rotz[1] = !rotz[1];
+        else if (angle == 270) rotz[2] = !rotz[2];
+    }
+
+    // Utiliser la méthode setRots pour mettre à jour les rotations
+    model.setRots(rotx, roty, rotz);
+
+    // Mettre à jour la couleur des boutons
+    updateButtonColors(rotx, roty, rotz);
+    QApplication::processEvents();
+    QWidget *parentWidget = this->parentWidget(); // Si MainViewer est dans une autre fenêtre, parentWidget va pointer sur le parent
+    if (parentWidget) {
+        parentWidget->repaint();  // Redessin complet de la fenêtre parente (avec les boutons mis à jour)
+    }
+}
+
+void MainViewer::updateButtonColor(QPushButton *button, const QString &axis, int angle, const QVector<bool> &rotx, const QVector<bool> &roty, const QVector<bool> &rotz) {
+    bool isActive = false;
+    if (axis == "x") {
+        if (angle == 90) isActive = rotx[0];
+        else if (angle == 180) isActive = rotx[1];
+        else if (angle == 270) isActive = rotx[2];
+    } else if (axis == "y") {
+        if (angle == 90) isActive = roty[0];
+        else if (angle == 180) isActive = roty[1];
+        else if (angle == 270) isActive = roty[2];
+    } else if (axis == "z") {
+        if (angle == 90) isActive = rotz[0];
+        else if (angle == 180) isActive = rotz[1];
+        else if (angle == 270) isActive = rotz[2];
+    }
+
+    // Modifier la couleur du bouton en fonction de l'état de la rotation
+    if (isActive) {
+        button->setStyleSheet("background-color: green");
+    } else {
+        button->setStyleSheet("");  // Réinitialiser la couleur de fond
+    }
+
+    QTimer::singleShot(0, button, SLOT(update()));
+}
+
+void MainViewer::updateButtonColors(const QVector<bool> &rotx, const QVector<bool> &roty, const QVector<bool> &rotz) {
+    // Récupérer tous les boutons dans le dialog et les mettre à jour
+    QList<QPushButton *> buttons = findChildren<QPushButton *>();
+    for (QPushButton *button : buttons) {
+        QString text = button->text();
+        QStringList parts = text.split(": ");
+        if (parts.size() == 2) {
+            QString axis = parts[0];
+            int angle = parts[1].toInt();
+            updateButtonColor(button, axis, angle, rotx, roty, rotz);
+        }
+    }
+}
+
+
 
 
 void MainViewer::save_mesh() {
@@ -425,69 +581,7 @@ void MainViewer::showControls()
     controls->show();
 }
 
-void MainViewer::saveCameraInFile(const QString &filename){
-    std::ofstream out (filename.toUtf8());
-    if (!out)
-        exit (EXIT_FAILURE);
-    // << operator for point3 causes linking problem on windows
-    out << camera()->position()[0] << " \t" << camera()->position()[1] << " \t" << camera()->position()[2] << " \t" " " <<
-                                      camera()->viewDirection()[0] << " \t" << camera()->viewDirection()[1] << " \t" << camera()->viewDirection()[2] << " \t" << " " <<
-                                      camera()->upVector()[0] << " \t" << camera()->upVector()[1] << " \t" <<camera()->upVector()[2] << " \t" <<" " <<
-                                      camera()->fieldOfView();
-    out << std::endl;
 
-    out.close ();
-}
-
-void MainViewer::openCameraFromFile(const QString &filename){
-
-    std::ifstream file;
-    file.open(filename.toStdString().c_str());
-
-    qglviewer::Vec pos;
-    qglviewer::Vec view;
-    qglviewer::Vec up;
-    float fov;
-
-    file >> (pos[0]) >> (pos[1]) >> (pos[2])
-         >> (view[0]) >> (view[1]) >> (view[2])
-         >> (up[0]) >> (up[1]) >> (up[2])
-         >> fov;
-
-    camera()->setPosition(pos);
-    camera()->setViewDirection(view);
-    camera()->setUpVector(up);
-    camera()->setFieldOfView(fov);
-
-    camera()->computeModelViewMatrix();
-    camera()->computeProjectionMatrix();
-
-    update();
-}
-
-void MainViewer::openCamera(){
-    QString fileName = QFileDialog::getOpenFileName(NULL,"","*.cam");
-    if ( !fileName.isNull() ) {                 // got a file name
-        openCameraFromFile(fileName);
-    }
-}
-
-void MainViewer::saveCamera(){
-    QString fileName = QFileDialog::getSaveFileName(NULL,"","*.cam");
-    if ( !fileName.isNull() ) {                 // got a file name
-        saveCameraInFile(fileName);
-    }
-}
-
-void MainViewer::saveSnapShotPlusPlus(){
-    QString fileName = QFileDialog::getSaveFileName(NULL,"*.png","");
-    if ( !fileName.isNull() ) {                 // got a file name
-        setSnapshotFormat("PNG");
-        setSnapshotQuality(100);
-        saveSnapshot( fileName );
-        saveCameraInFile( fileName+QString(".cam") );
-    }
-}
 
 /*
  * Nécessaires pour load les modeles pour ini
@@ -499,4 +593,8 @@ QVector<TileModel> MainViewer::getModeles(){
 
 void MainViewer::setModeles(QVector<TileModel> modeles){
     m_modeles=modeles;
+}
+
+void MainViewer::setMainWindow(QMainWindow *mainWindow) {
+    m_mainWindow = mainWindow;
 }

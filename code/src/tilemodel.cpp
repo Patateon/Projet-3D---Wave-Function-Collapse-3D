@@ -15,6 +15,11 @@ TileModel::TileModel(uint id, QString filename)
 {
     m_id = id;
     setMesh(filename);
+    QFileInfo fileInfo(filename);
+    m_name = fileInfo.fileName();
+    m_rotx=QVector<bool>(3,false);
+    m_roty=QVector<bool>(3,false);
+    m_rotz=QVector<bool>(3,false);
 }
 
 TileModel::TileModel(uint id, QSet<int> rules)
@@ -150,5 +155,9 @@ QVector<bool> TileModel::getYRot(){
 
 QVector<bool> TileModel::getZRot(){
     return m_rotz;
+}
+
+QString TileModel::getName(){
+    return m_name;
 }
 

@@ -28,6 +28,7 @@ int main( int argc , char** argv )
     mainWindow->addToolBar(toolBar);
 
     mainWindow->setCentralWidget(viewer);
+    viewer->setMainWindow(mainWindow);
 
     QObject::connect( viewer , SIGNAL(windowTitleUpdated(QString)) , mainWindow , SLOT(setWindowTitle(QString)) );
     viewer->updateTitle("Wave Function Collapse");
