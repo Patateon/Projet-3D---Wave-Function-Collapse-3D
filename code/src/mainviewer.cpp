@@ -140,7 +140,6 @@ void MainViewer::initGrid(uint dimension, float spacing){
     grid = new Grid(dimension, dimension, dimension,
                     spacing, spacing, spacing,
                     QVector3D(spacing/2.0, spacing/2.0, spacing/2.0), 4);
-    grid->generateGridLines();
     grid->setModeles(m_modeles);
 
 }
@@ -241,6 +240,7 @@ void MainViewer::draw() {
     grid->render(program);
 
     program->release();
+
     QOpenGLShaderProgram *lineProgram = new QOpenGLShaderProgram();
     if (!lineProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/line.vert")) {
         qCritical() << "Vertex shader compilation failed:" << lineProgram->log();
@@ -255,6 +255,7 @@ void MainViewer::draw() {
         return;
     }
 
+
     lineProgram->link();
     camera()->getProjectionMatrix(projectionMatrix.data());
     camera()->getModelViewMatrix(viewMatrix.data());
@@ -263,11 +264,10 @@ void MainViewer::draw() {
     lineProgram->setUniformValue("projectionMatrix", projectionMatrix);  // Matrice de projection
     lineProgram->setUniformValue("viewMatrix", viewMatrix);              // Matrice de vue
     lineProgram->setUniformValue("modelMatrix", model);
+
     grid->drawGridLines(lineProgram);
 
-
-
-    delete lineProgram;
+    lineProgram->release();
 }
 
 /*

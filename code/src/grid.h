@@ -6,37 +6,39 @@
 #include <QOpenGLShaderProgram>
 #include <vector>
 #include <tileinstance.h>
+#include <QMatrix4x4>
 
 struct Cell {
     bool hasMesh;
     TileInstance object;
-    int entropy=0;
+    int entropy = 0;
     Cell();
 };
 
 class Grid : protected QOpenGLFunctions_4_5_Core {
-    std::vector<QVector3D> gridLines;
 public:
     Grid();
-    Grid(int X, int Y, int Z, float dim_x, float dim_y, float dim_z, QVector3D bbMin,int nModel);
+    Grid(int X, int Y, int Z, float dim_x, float dim_y, float dim_z, QVector3D bbMin, int nModel);
+    ~Grid();
 
     // Getters and Setters
-    int getX() {return resX;}
-    int getY() {return resY;}
-    int getZ() {return resZ;}
+    int getX() { return resX; }
+    int getY() { return resY; }
+    int getZ() { return resZ; }
     Cell& getCell(int x, int y, int z);
     uint getCellIndex(int x, int y, int z) const;
     QVector3D getCellCoordinates(int x, int y, int z);
     void setObject(TileInstance object, int x, int y, int z);
-    void setObject(TileInstance object, int x, int y, int z,float x_rot,float y_rot, float z_rot);
+    void setObject(TileInstance object, int x, int y, int z, float x_rot, float y_rot, float z_rot);
     void setModeles(QVector<TileModel> modeles);
 
     // Draw Functions
     void initializeBuffers(QOpenGLShaderProgram* program);
     void render(QOpenGLShaderProgram* program);
     void clean();
-  
+
     bool isTypeClose(int x, int y, int z, uint type);
+    bool isInGrid(int x, int y, int z) const;
 
     // Debug Functions
     void drawNormales(QOpenGLShaderProgram* program);
@@ -58,8 +60,11 @@ private:
     QVector<QVector<QVector3D>> modelPos;
     QVector<QVector<QMatrix4x4>> modelMatrixes;
     QVector<GLuint> matrixVBO;
-    QVector<TileModel> modeles;//Charger les modeles a mettre dans le MyViewer?
+    QVector<TileModel> modeles; // Charger les modeles a mettre dans le MyViewer?
 
+    std::vector<QVector3D> gridLines; // Lignes de la grille
+    GLuint lineVBO; // VBO pour les lignes de la grille
+    bool linesInitialized; // Indique si les lignes de la grille ont été initialisées
 };
 
 #endif // GRID_H
