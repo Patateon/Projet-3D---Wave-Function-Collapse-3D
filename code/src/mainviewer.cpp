@@ -144,13 +144,14 @@ void MainViewer::initGrid(uint dimension, float spacing){
 
 }
 
-void MainViewer::initializeProgramShader() {
+void MainViewer::initializeShaders() {
     initializeOpenGLFunctions();
 
-    initializeShaders();
+    initializeProgramShader();
+    initializeGridLineShader();
 }
 
-void MainViewer::initializeShaders(){
+void MainViewer::initializeProgramShader(){
 
 
     delete program;
@@ -172,13 +173,34 @@ void MainViewer::initializeShaders(){
     }
 }
 
+void MainViewer::initializeGridLineShader(){
+    delete gridLineShader;
+    gridLineShader = new QOpenGLShaderProgram(this);
+
+    std::string path = "shaders/";
+    std::string vShaderPath = path + "lineVShader.glsl";
+    std::string fShaderPath = path + "lineFShader.glsl";
+
+    if (!gridLineShader->addShaderFromSourceFile(QOpenGLShader::Vertex, vShaderPath.c_str())){
+        qWarning() << "Erreur de compilation du line vertex shader :" << gridLineShader->log();
+    }
+
+    if (!gridLineShader->addShaderFromSourceFile(QOpenGLShader::Fragment, fShaderPath.c_str())){
+        qWarning() << "Erreur de compilation du line fragment shader :" << gridLineShader->log();
+    }
+
+    if (!gridLineShader->link()){
+        qWarning() << "Erreur de lors de la liaison des line shaders :" << gridLineShader->log();
+    }
+}
+
 /*
 * Lib QGLViewer callback to init, draw and clean
 */
 
 void MainViewer::init() {
     makeCurrent();
-    initializeProgramShader();
+    initializeShaders();
 
     setMouseTracking(true);// Needed for MouseGrabber.
 
@@ -204,7 +226,7 @@ void MainViewer::init() {
     glEnable(GL_COLOR_MATERIAL);
 
     //initializeBasicWFC(3, 1);
-
+    grid->initGridLines(program);
 
     showEntireScene();
 
@@ -221,6 +243,7 @@ void MainViewer::draw() {
 
     QMatrix4x4 viewMatrix;
     QMatrix4x4 projectionMatrix;
+    QMatrix4x4 model = QMatrix4x4();
 
     camera()->getModelViewMatrix(viewMatrix.data());
     camera()->getProjectionMatrix(projectionMatrix.data());
@@ -232,6 +255,7 @@ void MainViewer::draw() {
                                          qglCameraPosition.z);
 
     drawAxis(5);
+
     program->bind();
     program->setUniformValue("cameraPosition", cameraPosition);
     program->setUniformValue("viewProjMatrix", viewProjection);
@@ -241,33 +265,17 @@ void MainViewer::draw() {
 
     program->release();
 
-    QOpenGLShaderProgram *lineProgram = new QOpenGLShaderProgram();
-    if (!lineProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/line.vert")) {
-        qCritical() << "Vertex shader compilation failed:" << lineProgram->log();
-        return;
+    if (m_showgrid){
+        gridLineShader->bind();
+
+        gridLineShader->setUniformValue("projectionMatrix", projectionMatrix);  // Matrice de projection
+        gridLineShader->setUniformValue("viewMatrix", viewMatrix);              // Matrice de vue
+        gridLineShader->setUniformValue("modelMatrix", model);
+
+        grid->drawGridLines(gridLineShader);
+
+        gridLineShader->release();
     }
-    if (!lineProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/line.frag")) {
-        qCritical() << "Fragment shader compilation failed:" << lineProgram->log();
-        return;
-    }
-    if (!lineProgram->link()) {
-        qCritical() << "Shader program link failed:" << lineProgram->log();
-        return;
-    }
-
-
-    lineProgram->link();
-    camera()->getProjectionMatrix(projectionMatrix.data());
-    camera()->getModelViewMatrix(viewMatrix.data());
-    QMatrix4x4 model = QMatrix4x4();
-
-    lineProgram->setUniformValue("projectionMatrix", projectionMatrix);  // Matrice de projection
-    lineProgram->setUniformValue("viewMatrix", viewMatrix);              // Matrice de vue
-    lineProgram->setUniformValue("modelMatrix", model);
-
-    grid->drawGridLines(lineProgram);
-
-    lineProgram->release();
 }
 
 /*
@@ -302,6 +310,9 @@ void MainViewer::updateTitle( QString text ) {
 */
 
 void MainViewer::keyPressEvent( QKeyEvent * event ) {
+    if( event->key() == Qt::Key_G) {
+        m_showgrid = !m_showgrid;
+    }
     if( event->key() == Qt::Key_W) {
         m_wired = !m_wired;
     }

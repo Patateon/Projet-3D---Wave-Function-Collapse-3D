@@ -2,7 +2,7 @@
 
 Cell::Cell() : hasMesh(false), object(nullptr) {}
 
-Grid::Grid() : resX(0), resY(0), resZ(0), lineVBO(0), linesInitialized(false) {}
+Grid::Grid() : resX(0), resY(0), resZ(0), linesInitialized(false) {}
 
 Grid::Grid(
     int X, int Y, int Z,
@@ -29,9 +29,7 @@ Grid::Grid(
 
 Grid::~Grid() {
     // Nettoyage du VBO
-    if (lineVBO != 0) {
-        glDeleteBuffers(1, &lineVBO);
-    }
+    lineVBO.destroy();
 }
 
 Cell& Grid::getCell(int x, int y, int z) {
@@ -75,13 +73,14 @@ void Grid::initializeBuffers(QOpenGLShaderProgram* program) {
         return;
     }
 
-    for (uint i = 0; i < modelPos.size(); i++) {
+    for (int i = 0; i < modelPos.size(); i++) {
         qDebug() << "Number of type("
                  << i << ") = "
                  << modelPos[i].size();
     }
 
     initializeOpenGLFunctions();
+
     program->bind();
 
     matrixVBO.clear();
@@ -257,9 +256,8 @@ bool Grid::isInGrid(int x, int y, int z) const {
     return x >= 0 && x < resX && y >= 0 && y < resY && z >= 0 && z < resZ;
 }
 
-void Grid::generateGridLines() {
+void Grid::initGridLines(QOpenGLShaderProgram* program) {
     gridLines.clear();
-    QVector3D color(0.5f, 0.5f, 0.5f); // Gris
 
     // Lignes parallèles à l'axe X
     for (int z = 0; z <= resZ; ++z) {
@@ -284,37 +282,43 @@ void Grid::generateGridLines() {
             gridLines.push_back(QVector3D(x * dimX, y * dimY, resZ * dimZ) + BBmin);
         }
     }
-}
 
-void Grid::drawGridLines(QOpenGLShaderProgram* program) {
-    if (!linesInitialized) {
-        generateGridLines();
-        initializeOpenGLFunctions();
-
-        glGenBuffers(1, &lineVBO);
-        glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
-        glBufferData(GL_ARRAY_BUFFER, gridLines.size() * sizeof(QVector3D), gridLines.data(), GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-        linesInitialized = true;
-    }
-
-    program->bind();
-
-    glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
-    GLuint posLoc = program->attributeLocation("position");
-    if (posLoc == -1) {
-        qCritical() << "Position attribute not found in shader program.";
+    // Génération et allocation d'un VBO pour les lignes de la grille
+    if(!lineVBO.create()){
+        qWarning() << "Could not create grid line VBO!";
         return;
     }
 
-    glEnableVertexAttribArray(posLoc);
-    glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+    program->bind();
+    lineVBO.bind();
 
+    lineVBO.setUsagePattern(QOpenGLBuffer::StaticDraw);
+    lineVBO.allocate(gridLines.data(), gridLines.size() * sizeof(QVector3D));
+
+    program->setAttributeBuffer(0, GL_FLOAT, 0, 3, sizeof(QVector3D));
+    program->enableAttributeArray(0);
+
+    lineVBO.release();
+    program->release();
+}
+
+void Grid::drawGridLines(QOpenGLShaderProgram* program) {
+
+    if(!lineVBO.isCreated()){
+        return;
+    }
+    initializeOpenGLFunctions();
+
+    QVector3D color(0.5f, 0.5f, 0.5f); // Gris
+    program->bind();
+
+    // Envoie de la couleur au fragment shader
+    program->setUniformValue("color", color);
+
+    lineVBO.bind();
+    // Affichage des lignes de la grille
     glDrawArrays(GL_LINES, 0, gridLines.size());
 
-    glDisableVertexAttribArray(posLoc);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
+    lineVBO.release();
     program->release();
 }

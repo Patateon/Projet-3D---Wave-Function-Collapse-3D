@@ -4,6 +4,7 @@
 #include <QVector3D>
 #include <QOpenGLFunctions_4_5_Core>
 #include <QOpenGLShaderProgram>
+#include <QOpenGLContext>
 #include <vector>
 #include <tileinstance.h>
 #include <QMatrix4x4>
@@ -44,7 +45,7 @@ public:
     void drawNormales(QOpenGLShaderProgram* program);
     void printGrid();
 
-    void generateGridLines();
+    void initGridLines(QOpenGLShaderProgram* program);
     void drawGridLines(QOpenGLShaderProgram* program);
 
 private:
@@ -61,9 +62,11 @@ private:
     QVector<QVector<QMatrix4x4>> modelMatrixes;
     QVector<GLuint> matrixVBO;
     QVector<TileModel> modeles; // Charger les modeles a mettre dans le MyViewer?
+    QOpenGLContext *openGLcontext;
+    QOpenGLFunctions *glFuncs;
 
     std::vector<QVector3D> gridLines; // Lignes de la grille
-    GLuint lineVBO; // VBO pour les lignes de la grille
+    QOpenGLBuffer lineVBO; // VBO pour les lignes de la grille
     bool linesInitialized; // Indique si les lignes de la grille ont été initialisées
 };
 

@@ -49,6 +49,7 @@ class MainViewer : public QGLViewer , public QOpenGLFunctions_4_3_Core
     Wfc * wfc;
 
     QOpenGLShaderProgram *program = nullptr;
+    QOpenGLShaderProgram *gridLineShader = nullptr;
 
     GLuint vertexPosition = 0;
     GLuint vertexNormal = 0;
@@ -61,6 +62,7 @@ private :
     bool m_display_normal = true;
     QMainWindow *m_mainWindow;
     bool m_wired = false;
+    bool m_showgrid = true;
     QVector<TileModel> m_modeles;
     QListWidget *modelList;
 
@@ -79,6 +81,7 @@ public :
     void initializeBasicWFC(uint dimension, float spacing);
     void initGrid(uint dimension,float spacing);
     void initializeProgramShader();
+    void initializeGridLineShader();
     void initializeShaders();
 
     void init() override;

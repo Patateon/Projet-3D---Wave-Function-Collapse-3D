@@ -113,10 +113,6 @@ struct Mesh{
                 || normales[nIt].p.z() != 0){
                 normales[nIt].p.normalize();
             }
-//            std::cout << normales[nIt].p.x()
-//                      << normales[nIt].p.y()
-//                      << normales[nIt].p.z()
-//                      << std::endl;
         }
     }
 
