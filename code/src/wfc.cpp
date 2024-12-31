@@ -38,7 +38,16 @@ void print(const QSet<int>& set) {
     out << endl;
 }
 
-void Wfc::initWFC(int k,QVector<TileModel> &modeles){
+QSet<int> Wfc::getCorrespondingRules(QVector3D pos,QVector3D posV,TileModel *model){
+    if(pos.x()<posV.x()) return model->getXMinus();
+    if(pos.x()>posV.x()) return model->getXPlus();
+    if(pos.y()<posV.y()) return model->getYMinus();
+    if(pos.y()>posV.y()) return model->getYPlus();
+    if(pos.z()<posV.z()) return model->getZMinus();
+    if(pos.z()>posV.z()) return model->getZPlus();
+}
+
+void Wfc::initWFC(int k,QVector<TileModel> &modeles,int mode){
     if(k>=(m_grid.getX()*m_grid.getY()*m_grid.getZ())){
 //        std::cout<<"Taille de la grille : "<<m_grid.getX()*m_grid.getY()*m_grid.getZ()<<" k trop grand"<<std::endl;
     }
@@ -52,7 +61,7 @@ void Wfc::initWFC(int k,QVector<TileModel> &modeles){
     std::uniform_int_distribution<> disZ(0,m_grid.getZ()-1);
 
     int randomX,randomY,randomZ,randomModel;
-    QSet<int> rules;
+    QVector<QSet<int>*> rules;
     bool objectSet=false;
     QVector<QVector3D> voisins;
     int id;
@@ -85,7 +94,12 @@ void Wfc::initWFC(int k,QVector<TileModel> &modeles){
                 removeElementFromVector(voisins,QVector3D(randomX,randomY,randomZ));
                 for(int j=0;j<voisins.size();j++){
                     if(m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).hasMesh){
-                        ruleSets.push_back(m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).object.tileModel()->getRules());
+                        if(mode=0){
+                            ruleSets.push_back(getCorrespondingRules(QVector3D(randomX,randomY,randomZ),voisins[j],m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).object.tileModel()));
+                        }
+                        else{
+                            ruleSets.push_back(m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).object.tileModel()->getXMinus());
+                        }
                     }
                 }
                 while(!endModelChoice){
@@ -164,6 +178,7 @@ void Wfc::initWFC(int k,QVector<TileModel> &modeles){
                             //On check si le modele que l'on a choisi peut avoir l'id des voisins en voisin
                             for(int j=0;j<voisins.size();j++){
                                 if(m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).hasMesh){
+                                    //Besoin de fonction pour prendre la bonne rule du voisin , voir si en arnaquant pas possibilié d'utiliser correspondingrules en donnant l'inverse
                                     id=m_grid.getCell(voisins[j].x(),voisins[j].y(),voisins[j].z()).object.tileModel()->id();
                                     if(!rules.contains(id)){
                                         ruleBroken=true;
@@ -200,7 +215,7 @@ void Wfc::initWFC(int k,QVector<TileModel> &modeles){
 void Wfc::runWFC(int k,QVector<TileModel> &modeles){
 
     for(int i=0;i<30;i++){
-        initWFC(k,modeles);
+        initWFC(k,modeles,m_grid.mode);
         bool isFull=false;
         std::random_device rd;
         std::mt19937 gen(rd());

@@ -264,6 +264,7 @@ void removeElementFromVec(QVector<QVector3D>& vec, const QVector3D& toRemove) {
             vec.removeAt(index);
     }
 }
+/*
 void Grid::createRules(){//Créer les règles a partir d'une grille contenant juste des tilemodels sans regles
     //Regles de type sont automatiques selon le nombre de voisins par rapport a la taille de modeles
     for(int x = 0;x<resX;x++){
@@ -288,5 +289,8 @@ void Grid::createRules(){//Créer les règles a partir d'une grille contenant ju
         }
     }
 }
+*/
 
-
+int Grid::getMode(){
+    return mode;
+}

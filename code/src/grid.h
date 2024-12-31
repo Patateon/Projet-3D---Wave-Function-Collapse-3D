@@ -41,6 +41,7 @@ public:
     void drawNormales(QOpenGLShaderProgram* program);
     void printGrid();
 
+    int getMode();
 private:
     QVector3D BBmin;
     QVector3D BBmax;
@@ -55,6 +56,7 @@ private:
     QVector<QVector<QMatrix4x4>> modelMatrixes;
     QVector<GLuint> matrixVBO;
     QVector<TileModel> modeles;//Charger les modeles a mettre dans le MyViewer?
+    int mode;//Notion de voisinage simple ou précis
 
 };
 
