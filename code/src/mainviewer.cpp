@@ -1,11 +1,11 @@
 #include "mainviewer.h"
+#include "basicviewer.h"
+#include <QDockWidget>
 
-MainViewer::MainViewer(QGLWidget * parent) : QGLViewer(parent), QOpenGLFunctions_4_3_Core() {
-    // Vérifiez que vous avez un layout défini
-    if (!layout()) {
-        setLayout(new QVBoxLayout());  // Ajoutez un layout pour gérer les widgets
-    }
-}
+MainViewer::MainViewer(QGLWidget * parent)
+    : QGLViewer(parent), QOpenGLFunctions_4_3_Core()
+{}
+
 MainViewer::~MainViewer(){
     mesh.clear();
     delete program;
@@ -40,8 +40,28 @@ void MainViewer::adjustCamera( point3d const & bb , point3d const & BB ) {
 * Initialize routines
 */
 
-void MainViewer::initializeModels() {
+void MainViewer::initModelsViewer() {
+    if (!m_model_layout_initialized){
+        if (!this->parent()){
+            return;
+        }
 
+        m_mainWindow = (QMainWindow*) this->parent();
+
+        m_modelsLayout = new QVBoxLayout;
+        m_modelsLayout->setAlignment(Qt::AlignTop);
+
+        QWidget *vBoxWidget = new QWidget;
+        vBoxWidget->setLayout(m_modelsLayout);
+
+        QDockWidget *dock = new QDockWidget();
+        dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
+        dock->setWidget(vBoxWidget);
+
+        m_mainWindow->addDockWidget(Qt::LeftDockWidgetArea, dock);
+
+        m_model_layout_initialized = true;
+    }
 }
 
 void MainViewer::initializeRandomGrid(uint dimension, float spacing) {
@@ -366,47 +386,61 @@ void MainViewer::mouseReleaseEvent(QMouseEvent* e  ) {
 */
 
 void MainViewer::open_mesh() {
-    bool success = false;
     QString fileName = QFileDialog::getOpenFileName(NULL,"","");
     if ( !fileName.isNull() ) { // got a file name
-        if(fileName.endsWith(QString(".off")))
-            success = OFFIO::openTriMesh(fileName.toStdString() , mesh.vertices , mesh.triangles );
-        else if(fileName.endsWith(QString(".obj")))
-            success = OBJIO::openTriMesh(fileName.toStdString() , mesh.vertices , mesh.triangles );
-        if(success) {
-            std::cout << fileName.toStdString() << " was opened successfully" << std::endl;
-            TileModel modele(m_modeles.size(),fileName);
-            m_modeles.push_back(modele);
-            for(int i = 0 ;i<m_modeles.size();i++){
-                qDebug()<<m_modeles[i].mesh().vertices.size();
-            }
-            /*
-            point3d bb(FLT_MAX,FLT_MAX,FLT_MAX) , BB(-FLT_MAX,-FLT_MAX,-FLT_MAX);
-            for( unsigned int v = 0 ; v < mesh.vertices.size() ; ++v ) {
-                bb = point3d::min(bb , mesh.vertices[v]);
-                BB = point3d::max(BB , mesh.vertices[v]);
-            }
-            adjustCamera(bb,BB);
-            update();
-            mesh.initVAO(program);*/
+
+        TileModel * modele = new TileModel(m_modeles.size(),fileName);
+        qDebug() << fileName << "was opened successfully";
+
+        m_modeles.push_back(*modele);
+        for(int i = 0 ;i<m_modeles.size();i++){
+            qDebug()<<m_modeles[i].mesh().vertices.size();
         }
-        else
-            std::cout << fileName.toStdString() << " could not be opened" << std::endl;
+
+        initModelsViewer();
+
+        BasicViewer *basicViewer = new BasicViewer();
+        basicViewer->setMaximumSize(200, 150);
+        basicViewer->setParent(this);
+        basicViewer->setTileModel(modele);
+        m_modelsLayout->addWidget(basicViewer);
+
+        /*
+        point3d bb(FLT_MAX, FLT_MAX, FLT_MAX) , BB(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+        for( unsigned int v = 0 ; v < mesh.vertices.size() ; ++v ) {
+            bb = point3d::min(bb , mesh.vertices[v]);
+            BB = point3d::max(BB , mesh.vertices[v]);
+        }
+        adjustCamera(bb,BB);
+        mesh.initVAO(program);
+        */
+        update();
     }
 }
 
 void MainViewer::create_initialization_grid() {
     bool ok;
+
     QInputDialog *inputDialog = new QInputDialog(this);
     inputDialog->setLabelText(tr("Entrer la résolution de la grille :"));
     inputDialog->setTextValue(QString::number(0));
     inputDialog->setDoubleRange(-10000, 10000);
     inputDialog->setDoubleDecimals(2);
     inputDialog->resize(400, 200);
-    double value1 = inputDialog->getDouble(this, tr("Résolution de la grille"), tr("Résolution :"), 0, 0, 1000, 2, &ok);
+
+    double value1 = inputDialog->getDouble(this,
+                                           tr("Résolution de la grille"),
+                                           tr("Résolution :"),
+                                           0, 0, 1000, 2, &ok);
     if (ok) {
         inputDialog->setLabelText(tr("Entrer la taille des cellules :"));
-        double value2 = inputDialog->getDouble(this, tr("Taille des cellules"), tr("Taille de cellule :"), 0, 0, 100, 2, &ok);
+
+        double value2 = inputDialog->getDouble(
+            this,
+            tr("Taille des cellules"),
+            tr("Taille de cellule :"),
+            0, 0, 100, 2, &ok);
+
         if (ok) {
             initGrid(value1, value2);
             float boxSize = (float)value1 * value2;
@@ -425,6 +459,7 @@ void MainViewer::create_initialization_grid() {
             for (int i = 0; i < m_modeles.size(); ++i) {
                 modelList->addItem(m_modeles[i].getName());
             }
+
             connect(modelList, &QListWidget::itemDoubleClicked, this, &MainViewer::onModelDoubleClicked);
             layout->addWidget(modelList);
             dialog->resize(300, 300);

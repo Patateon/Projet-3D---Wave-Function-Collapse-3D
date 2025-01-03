@@ -36,6 +36,8 @@
 #include <QDesktopWidget>
 
 #include "qt/QSmartAction.h"
+
+#include "basicviewer.h"
 #include "grid.h"
 #include "wfc.h"
 
@@ -51,18 +53,18 @@ class MainViewer : public QGLViewer , public QOpenGLFunctions_4_3_Core
     QOpenGLShaderProgram *program = nullptr;
     QOpenGLShaderProgram *gridLineShader = nullptr;
 
-    GLuint vertexPosition = 0;
-    GLuint vertexNormal = 0;
-    GLuint vertexColor = 0;
-
     QWidget * controls;
 
 private :
     float m_scale_normal = 1.0;
     bool m_display_normal = true;
-    QMainWindow *m_mainWindow;
     bool m_wired = false;
     bool m_showgrid = true;
+    bool m_model_layout_initialized = false;
+
+    QMainWindow *m_mainWindow;
+    QVBoxLayout *m_modelsLayout;
+
     QVector<TileModel> m_modeles;
     QListWidget *modelList;
 
@@ -75,7 +77,7 @@ public :
     void pickBackgroundColor();
     void adjustCamera( point3d const & bb , point3d const & BB );
 
-    void initializeModels();
+    void initModelsViewer();
     void initializeGrid();
     void initializeRandomGrid(uint dimension, float spacing);
     void initializeBasicWFC(uint dimension, float spacing);
@@ -101,7 +103,6 @@ public :
     void setModeles(QVector<TileModel> modeles);
 
     void setMainWindow(QMainWindow *mainWindow);
-
 
 signals:
     void windowTitleUpdated( const QString & );

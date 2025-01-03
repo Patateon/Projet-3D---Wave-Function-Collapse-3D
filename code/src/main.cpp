@@ -3,8 +3,6 @@
 #include <QMainWindow>
 #include <QToolBar>
 #include "mainviewer.h"
-#include "grid.h"
-#include "wfc.h"
 
 void printQSet(const QSet<int>& set) {
     for (const int& element : set) {
@@ -30,10 +28,12 @@ int main( int argc , char** argv )
     mainWindow->setCentralWidget(viewer);
     viewer->setMainWindow(mainWindow);
 
-    QObject::connect( viewer , SIGNAL(windowTitleUpdated(QString)) , mainWindow , SLOT(setWindowTitle(QString)) );
+    QObject::connect(viewer, SIGNAL(windowTitleUpdated(QString)),
+                     mainWindow, SLOT(setWindowTitle(QString)));
     viewer->updateTitle("Wave Function Collapse");
 
     mainWindow->setWindowIcon(QIcon("img/icons/icon.png"));
+    mainWindow->setMinimumSize(800, 600);
     mainWindow->show();
 
     return app.exec();

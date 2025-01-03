@@ -42,7 +42,6 @@ void TileModel::loadOBJ(QString filename){
         qWarning() << "Could not load obj : " << filename;
         return;
     }
-    qDebug() << "Current mesh : " << filename;
 
     if(loader.LoadedMeshes.size() != 1) {
         qWarning() << "Unexpected number of meshes "

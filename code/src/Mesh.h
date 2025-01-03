@@ -196,6 +196,7 @@ struct Mesh{
     void render(QOpenGLShaderProgram* program) {
         program->bind();
         if (vao == nullptr){
+            qWarning() << "VAO is not initialized";
             return;
         }
         vao->bind();
