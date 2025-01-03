@@ -38,7 +38,7 @@ public:
     QVector<bool> getYRot();
     QVector<bool> getZRot();
     void setRots(QVector<bool> rotx,QVector<bool> roty,QVector<bool> rotz);
-    int getType();
+    int getType() const;
     void setType(QVector<TileModel> &modeles,int mode);
     bool operator<(const TileModel & other) const;
 private:

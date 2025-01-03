@@ -42,6 +42,7 @@ public:
     void printGrid();
 
     int getMode();
+    void setMode(int mode);
 private:
     QVector3D BBmin;
     QVector3D BBmax;

@@ -137,8 +137,8 @@ QSet<int> TileModel::getZPlus(){
 
 void TileModel::setType(QVector<TileModel> &modeles,int mode){
     if(mode==0){
-        int numberAllowed=m_rules_xminus.size()+m_rules_xplus.size()+m_rules_yminus.size()+m_rules_yplus.size()+m_rules_zminus.size()+m_rules_zplus.size();
-        if(numberAllowed<=modeles.size()/2){
+        float meanN=(m_rules_xminus.size()+m_rules_xplus.size()+m_rules_yminus.size()+m_rules_yplus.size()+m_rules_zminus.size()+m_rules_zplus.size())/6.0f;
+        if(meanN<=modeles.size()/3.0f){
             m_type=1;
         }
         else{
@@ -153,10 +153,9 @@ void TileModel::setType(QVector<TileModel> &modeles,int mode){
             m_type=0;
         }
     }
-
 }
 
-int TileModel::getType(){
+int TileModel::getType() const{
     return m_type;
 }
 

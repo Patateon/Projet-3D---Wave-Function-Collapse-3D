@@ -75,11 +75,11 @@ void Grid::initializeBuffers(QOpenGLShaderProgram* program) {
         return;
     }
 
-    for(uint i = 0; i < modelPos.size(); i++){
+    /*for(uint i = 0; i < modelPos.size(); i++){
         qDebug() << "Number of type("
                  << i <<") = "
                  << modelPos[i].size();
-    }
+    }*/
 
     initializeOpenGLFunctions();
     program->bind();
@@ -185,8 +185,9 @@ void Grid::printGrid()  {
                               << ", " << y
                               << ", " << z << ") hasMesh: "
                               << cell.hasMesh
-                              << " mode: " << cell.object.tileModel()->id()
-                              << " entropie : "<<cell.entropy<< std::endl;
+                              << " model: " << cell.object.tileModel()->id()
+                              << " entropie : "<<cell.entropy
+                    << " type :"<<cell.object.tileModel()->getType()<< std::endl;
 
                 }
             }
@@ -293,4 +294,8 @@ void Grid::createRules(){//Créer les règles a partir d'une grille contenant ju
 
 int Grid::getMode(){
     return mode;
+}
+
+void Grid::setMode(int mode){
+    mode=mode;
 }
