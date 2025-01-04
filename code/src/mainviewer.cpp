@@ -152,7 +152,7 @@ void MainViewer::initializeRandomGrid(uint dimension, float spacing) {
 }
 
 void MainViewer::initializeBasicWFC(uint dimension, float spacing) {
-    QString modelPath1 = QString("models/tiles/empty.obj");
+    QString modelPath1 = QString("models/tiles/stair.obj");
     QString modelPath2 = QString("models/tiles/stair.obj");
     QString modelPath3 = QString("models/tiles/slab.obj");
     QString modelPath4 = QString("models/monkey.off");
@@ -163,8 +163,8 @@ void MainViewer::initializeBasicWFC(uint dimension, float spacing) {
     TileModel model4 = TileModel(3, modelPath4);
 
     QVector<TileModel> modeles;
-    modeles.append(model1);
-    modeles.append(model2);
+    modeles.push_back(model1);
+    modeles.push_back(model2);
     modeles.append(model3);
     modeles.append(model4);
   
@@ -180,27 +180,58 @@ void MainViewer::initializeBasicWFC(uint dimension, float spacing) {
                     spacing, spacing, spacing,
                     QVector3D(spacing/2.0, spacing/2.0, spacing/2.0), 4);
     grid->setModeles(modeles);
-
-    for(int i = 0;i<4;i++){
-        QSet<int> rules;
+    grid->setMode(0);
+    std::cout<<"Creation règles"<<std::endl;
+    for(int i = 0;i<modeles.size();i++){
         QVector<bool> x_rot={1,static_cast<bool>(i%2),static_cast<bool>((i*3)%2),0};
         QVector<bool> y_rot={1,static_cast<bool>((i+1)%2),static_cast<bool>((i*3)%2),0};
         QVector<bool> z_rot={1,static_cast<bool>(i%2),static_cast<bool>((i*3+1)%2),0};
-        rules.insert(std::min(i+1,2));
-        if(i!=1){
-            rules.insert(std::max(i-1,0));
+        QVector<QSet<int>> rules;
+
+        for(int j=0;j<6;j++){
+            QSet<int> set;
+            set.insert(0);
+            set.insert(1);
+            //set.insert(2);
+            set.insert(3);
+            set.insert((j%4+i%4)%4);
+            if((j+1)%3<=1){
+                set.insert((j%4)%4);
+            }
+
+                if((j+1)%3>=1){
+                    set.insert((j%3)%4);
+                }
+                if((j+1)%3<=1){
+                    set.insert(((j*3)%4)%4);
+                }
+
+
+            rules.push_back(set);
         }
-        modeles[i].setRules(rules);
+        modeles[i].setRules(rules[0],rules[1],rules[2],rules[3],rules[4],rules[5]);
         modeles[i].setRots(x_rot,y_rot,z_rot);
-        modeles[i].setType(modeles);
+        modeles[i].setType(modeles,grid->getMode());
+
+        qDebug() << "Regles modele "<<i;
+        qDebug() << "xminus :"<< rules[0];
+        qDebug() << "xplus :"<<rules[1];
+        qDebug() << "yminus :"<< rules[2];
+        qDebug() << "yplus :" <<rules[3];
+        qDebug() << "zminus :"<<rules[4];
+        qDebug() << "zplus :"<<rules[5];
+
 //        std::cout<<"Regles modele "<<i<<" : "<<std::endl;
 //        qDebug() << rules;
-        std::cout<<"type : "<<modeles[i].getType()<<std::endl;
     }
+    std::cout<<"Fin Creation règles"<<std::endl;
+
 
     wfc = new Wfc(*grid);
-    wfc->runWFC(20, modeles);
-
+    std::cout<<"mode : "<<grid->getMode()<<std::endl;;
+    wfc->runWFC(5, modeles,grid->getMode());
+    grid->printGrid();
+    QVector<TileModel>  modelRules =grid->createRules();
     grid->initializeBuffers(program);
 }
 

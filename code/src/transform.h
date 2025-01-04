@@ -4,7 +4,7 @@
 #include <QVector3D>
 #include <QQuaternion>
 #include <QMatrix4x4>
-
+#include <QtMath>
 class Transform
 {
 public:
@@ -15,6 +15,7 @@ public:
     QVector3D & scale() {return m_scale;}
 
     QMatrix4x4 getLocalModel();
+    QVector3D getRotationAngles() const;
 
 
 private:

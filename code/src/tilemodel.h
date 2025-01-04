@@ -11,7 +11,7 @@ public:
     // Constructor/Desctructor
     TileModel(uint id);
     TileModel(uint id, QString filename);
-    TileModel(uint id, QSet<int> rules);
+    TileModel(uint id, QVector<QSet<int>> rules);
     ~TileModel();
 
     // Getter/Setter
@@ -27,21 +27,36 @@ public:
     void loadOBJ(QString filename);
 
     void computeBoundingBox();
-    QSet<int> getRules();
-    void setRules(QSet<int> rules);
+    QVector<QSet<int>*> getRules();
+    QSet<int> getXMinus();
+    QSet<int> getXPlus();
+    QSet<int> getYMinus();
+    QSet<int> getYPlus();
+    QSet<int> getZMinus();
+    QSet<int> getZPlus();
+    void setRules(QSet<int> rules_xminus,QSet<int> rules_xplus,QSet<int> rules_yminus,QSet<int> rules_yplus,QSet<int> rules_zminus,QSet<int> rules_zplus);
     QVector<bool> getXRot();
     QVector<bool> getYRot();
     QVector<bool> getZRot();
     void setRots(QVector<bool> rotx,QVector<bool> roty,QVector<bool> rotz);
-    int getType();
-    void setType(QVector<TileModel> modeles);
+    int getType() const;
+    void setType(QVector<TileModel> &modeles,int mode);
     bool operator<(const TileModel & other) const;
     QString getName();
 private:
     QString m_name;
     uint m_id;
+  
+    // TODO Eventuellement provoque des erreurs sur certaines vielles fonctions
     Mesh *m_mesh = nullptr;
-    QSet<int> m_rules;//Contient les indices de modele autorisé dans les cellules adjacentes
+  
+    QSet<int> m_rules_xminus;//Contient les indices de modele autorisé en x négatif de ce modele
+    QSet<int> m_rules_xplus;
+    QSet<int> m_rules_yminus;
+    QSet<int> m_rules_yplus;
+    QSet<int> m_rules_zminus;
+    QSet<int> m_rules_zplus;
+  
     QVector<bool> m_rotx;//regles sur rotation autorisée , 90 180 270
     QVector<bool> m_roty;
     QVector<bool> m_rotz;

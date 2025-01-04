@@ -2,6 +2,7 @@
 #define GRID_H
 
 #include <QVector3D>
+#include <QVector>
 #include <QOpenGLFunctions_4_5_Core>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLContext>
@@ -33,7 +34,7 @@ public:
     void setObject(TileInstance object, int x, int y, int z);
     void setObject(TileInstance object, int x, int y, int z, float x_rot, float y_rot, float z_rot);
     void setModeles(QVector<TileModel> modeles);
-    QVector<TileModel> getModeles() {return modeles;}
+    QVector<TileModel> getModeles();
 
     // Function to selected a particular select and display it
     void selectCell(uint x, uint y, uint z);
@@ -45,22 +46,25 @@ public:
     void moveSelection(int axis, int step);
     int selectedCellIdx() {return selectedCell;}
 
-
     // Draw Functions
     void initializeBuffers(QOpenGLShaderProgram* program);
     void render(QOpenGLShaderProgram* program);
     void clean();
 
     bool isTypeClose(int x, int y, int z, uint type);
+    QVector<TileModel> createRules();
+  
     bool isInGrid(int x, int y, int z) const;
 
     // Debug Functions
     void drawNormales(QOpenGLShaderProgram* program);
     void printGrid();
 
+    int getMode();
+    void setMode(int mode);
     void initGridLines(QOpenGLShaderProgram* program);
     void drawGridLines(QOpenGLShaderProgram* program);
-
+  
 private:
     QVector3D BBmin;
     QVector3D BBmax;
@@ -74,7 +78,9 @@ private:
     QVector<QVector<QVector3D>> modelPos;
     QVector<QVector<QMatrix4x4>> modelMatrixes;
     QVector<GLuint> matrixVBO;
+  
     QVector<TileModel> modeles; // Charger les modeles a mettre dans le MyViewer?
+    int mode;//Notion de voisinage simple ou précis
 
     int selectedCell = -1; // Indice de la cellule actuellement sélectionner, -1 si pas sélectionner
     QVector3D selectedCellCoord;
