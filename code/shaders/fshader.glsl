@@ -1,7 +1,6 @@
 #version 140
 in vec3 worldPosition;
 in vec3 worldNormal;
-in vec3 worldCamera;
 
 out vec4 fragmentColor;
 
@@ -9,7 +8,6 @@ uniform vec3 cameraPosition;
 
 vec3 ambientColor = vec3(0.3, 0.3, 0.3);
 vec3 diffuseColor = vec3(1.0, 1.0, 1.0);
-vec3 specularColor = vec3(1.0, 1.0, 1.0);
 
 vec3 lightColor = vec3(1.0, 1.0, 1.0);
 vec3 materialColor = vec3(1.0, 0.0, 0.0);

@@ -3,6 +3,7 @@
 
 #include "Mesh.h"
 #include "transform.h"
+#include <QFileInfo>
 
 class TileModel
 {
@@ -16,12 +17,12 @@ public:
     // Getter/Setter
     const uint & id() {return m_id;}
     uint id() const {return m_id;}
-    Mesh & mesh() {return m_mesh;}
+    Mesh & mesh() {return *m_mesh;}
     const QVector3D & bbmin() {return m_bbmin;}
     const QVector3D & bbmax() {return m_bbmax;}
 
     // Mesh file handling
-    void setMesh(Mesh *mesh) {m_mesh = *mesh;}
+    void setMesh(Mesh *mesh) {m_mesh = mesh;}
     void setMesh(QString filename);
     void loadOBJ(QString filename);
 
@@ -41,15 +42,21 @@ public:
     int getType() const;
     void setType(QVector<TileModel> &modeles,int mode);
     bool operator<(const TileModel & other) const;
+    QString getName();
 private:
+    QString m_name;
     uint m_id;
-    Mesh m_mesh;
+  
+    // TODO Eventuellement provoque des erreurs sur certaines vielles fonctions
+    Mesh *m_mesh = nullptr;
+  
     QSet<int> m_rules_xminus;//Contient les indices de modele autorisé en x négatif de ce modele
     QSet<int> m_rules_xplus;
     QSet<int> m_rules_yminus;
     QSet<int> m_rules_yplus;
     QSet<int> m_rules_zminus;
     QSet<int> m_rules_zplus;
+  
     QVector<bool> m_rotx;//regles sur rotation autorisée , 90 180 270
     QVector<bool> m_roty;
     QVector<bool> m_rotz;
