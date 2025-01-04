@@ -33,8 +33,9 @@ public:
     QVector3D getCellCoordinates(int x, int y, int z);
     void setObject(TileInstance object, int x, int y, int z);
     void setObject(TileInstance object, int x, int y, int z, float x_rot, float y_rot, float z_rot);
-    void setModeles(QVector<TileModel> modeles);
-    QVector<TileModel> getModeles();
+    void deleteInstance(uint x, uint y, uint z);
+    void setModeles(QVector<TileModel*> modeles);
+    QVector<TileModel*> getModeles();
 
     // Function to selected a particular select and display it
     void selectCell(uint x, uint y, uint z);
@@ -44,7 +45,11 @@ public:
     void displayCell(bool showGrid);
     // Function to move the selected Cell
     void moveSelection(int axis, int step);
+    void rotateSelection(QOpenGLShaderProgram *program, int axis, int step);
     int selectedCellIdx() {return selectedCell;}
+
+    // Clean matrix transform
+    void cleanTransform();
 
     // Draw Functions
     void initializeBuffers(QOpenGLShaderProgram* program);
@@ -52,7 +57,7 @@ public:
     void clean();
 
     bool isTypeClose(int x, int y, int z, uint type);
-    QVector<TileModel> createRules();
+    QVector<TileModel*> createRules();
   
     bool isInGrid(int x, int y, int z) const;
 
@@ -79,7 +84,7 @@ private:
     QVector<QVector<QMatrix4x4>> modelMatrixes;
     QVector<GLuint> matrixVBO;
   
-    QVector<TileModel> modeles; // Charger les modeles a mettre dans le MyViewer?
+    QVector<TileModel*> modeles; // Charger les modeles a mettre dans le MyViewer?
     int mode;//Notion de voisinage simple ou précis
 
     int selectedCell = -1; // Indice de la cellule actuellement sélectionner, -1 si pas sélectionner

@@ -56,11 +56,17 @@ MainViewer::~MainViewer(){
 void MainViewer::add_actions_to_toolBar(QToolBar *toolBar)
 {
     // Specify the actions :
-    DetailedAction * open_mesh = new DetailedAction( QIcon("./icons/open.png") , "Open Mesh" , "Open Mesh" , this , this , SLOT(open_mesh()) );
-    DetailedAction * create_init_grid = new DetailedAction( QIcon("./icons/rubik.png") , "Create initialization grid" , "Create initialization grid" , this , this , SLOT(create_initialization_grid()) );
+    m_open_mesh = new DetailedAction( QIcon("./icons/open.png") , "Open Mesh" , "Open Mesh" , this , this , SLOT(open_mesh()) );
+    m_create_init_grid = new DetailedAction( QIcon("./icons/rubik.png") , "Create initialization grid" , "Create initialization grid" , this , this , SLOT(create_initialization_grid()) );
+    m_enable_rotation = new DetailedAction( QIcon("./icons/unlock.png") , "Toggle Rotation" , "Toggle Rotation" , this , this , SLOT(toggleRotation()) );
+
     // Add them :
-    toolBar->addAction( open_mesh );
-    toolBar->addAction( create_init_grid);
+    m_enable_rotation->setCheckable(true);
+    m_create_init_grid->setEnabled(false);
+
+    toolBar->addAction( m_open_mesh );
+    toolBar->addAction( m_create_init_grid);
+    toolBar->addAction( m_enable_rotation);
 }
 
 void MainViewer::pickBackgroundColor() {
@@ -123,14 +129,14 @@ void MainViewer::initializeRandomGrid(uint dimension, float spacing) {
     TileModel model3 = TileModel(2, modelPath1);
     TileModel model4 = TileModel(3, modelPath1);
 
-    QVector<TileModel> modeles;
-    modeles.append(model1);
-    modeles.append(model2);
-    modeles.append(model3);
-    modeles.append(model4);
+    QVector<TileModel*> modeles;
+    modeles.append(&model1);
+    modeles.append(&model2);
+    modeles.append(&model3);
+    modeles.append(&model4);
 
     for(int i = 0; i < modeles.size(); i++){
-        modeles[i].mesh().initVAO(program);
+        modeles[i]->mesh().initVAO(program);
     }
 
     grid = new Grid(dimension, dimension, dimension,
@@ -142,7 +148,7 @@ void MainViewer::initializeRandomGrid(uint dimension, float spacing) {
         for (uint y = 0; y < dimension; y++){
             for (uint z = 0; z < dimension; z++){
                 int model = rand()%2;
-                TileInstance instance = TileInstance(&modeles[model]);
+                TileInstance instance = TileInstance(modeles[model]);
                 grid->setObject(instance, x, y, z, 0, 0, 0);
             }
         }
@@ -162,18 +168,18 @@ void MainViewer::initializeBasicWFC(uint dimension, float spacing) {
     TileModel model3 = TileModel(2, modelPath3);
     TileModel model4 = TileModel(3, modelPath4);
 
-    QVector<TileModel> modeles;
-    modeles.push_back(model1);
-    modeles.push_back(model2);
-    modeles.append(model3);
-    modeles.append(model4);
+    QVector<TileModel*> modeles;
+    modeles.append(&model1);
+    modeles.append(&model2);
+    modeles.append(&model3);
+    modeles.append(&model4);
   
     QVector<QVector<bool>> x_rot;
     QVector<QVector<bool>> y_rot;
     QVector<QVector<bool>> z_rot;
 
     for(int i = 0; i < modeles.size(); i++){
-        modeles[i].mesh().initVAO(program);
+        modeles[i]->mesh().initVAO(program);
     }
 
     grid = new Grid(dimension, dimension, dimension,
@@ -209,9 +215,9 @@ void MainViewer::initializeBasicWFC(uint dimension, float spacing) {
 
             rules.push_back(set);
         }
-        modeles[i].setRules(rules[0],rules[1],rules[2],rules[3],rules[4],rules[5]);
-        modeles[i].setRots(x_rot,y_rot,z_rot);
-        modeles[i].setType(modeles,grid->getMode());
+        modeles[i]->setRules(rules[0],rules[1],rules[2],rules[3],rules[4],rules[5]);
+        modeles[i]->setRots(x_rot,y_rot,z_rot);
+        modeles[i]->setType(modeles,grid->getMode());
 
         qDebug() << "Regles modele "<<i;
         qDebug() << "xminus :"<< rules[0];
@@ -231,7 +237,7 @@ void MainViewer::initializeBasicWFC(uint dimension, float spacing) {
     std::cout<<"mode : "<<grid->getMode()<<std::endl;;
     wfc->runWFC(5, modeles,grid->getMode());
     grid->printGrid();
-    QVector<TileModel>  modelRules =grid->createRules();
+    QVector<TileModel*>  modelRules =grid->createRules();
     grid->initializeBuffers(program);
 }
 
@@ -239,7 +245,7 @@ void MainViewer::initGrid(uint dimension, float spacing){
     makeCurrent();
     grid = new Grid(dimension, dimension, dimension,
                     spacing, spacing, spacing,
-                    QVector3D(spacing/2.0, spacing/2.0, spacing/2.0), 4);
+                    QVector3D()/*QVector3D(spacing/2.0, spacing/2.0, spacing/2.0)*/, 4);
     grid->setModeles(m_modeles);
 }
 
@@ -332,8 +338,9 @@ void MainViewer::init() {
     // initializeBasicWFC(3, 1);
     if (grid){
         for(int i = 0; i < grid->getModeles().size(); i++){
-            grid->getModeles()[i].mesh().initVAO(program);
+            grid->getModeles()[i]->mesh().initVAO(program);
         }
+
         grid->initGridLines(gridLineShader);
         grid->initializeBuffers(program);
     }
@@ -442,27 +449,57 @@ void MainViewer::keyPressEvent( QKeyEvent * event ) {
 
     // Cell selection movement
     if( event->key() == Qt::Key_Left) {
-        grid->moveSelection(0, -1);
+        if (m_rotation_mode){
+            if (program)
+                grid->rotateSelection(program, 0, -1);
+        }else{
+            grid->moveSelection(0, -1);
+        }
         update();
     }
     if( event->key() == Qt::Key_Right) {
-        grid->moveSelection(0, 1);
+        if (m_rotation_mode){
+            if (program)
+            grid->rotateSelection(program, 0, 1);
+        }else{
+            grid->moveSelection(0, 1);
+        }
         update();
     }
     if( event->key() == Qt::Key_Control) {
-        grid->moveSelection(1, -1);
+        if (m_rotation_mode){
+            if (program)
+                grid->rotateSelection(program, 1, -1);
+        }else{
+            grid->moveSelection(1, -1);
+        }
         update();
     }
     if( event->key() == Qt::Key_Space) {
-        grid->moveSelection(1, 1);
+        if (m_rotation_mode){
+            if (program)
+                grid->rotateSelection(program, 1, 1);
+        }else{
+            grid->moveSelection(1, 1);
+        }
         update();
     }
     if( event->key() == Qt::Key_Up) {
-        grid->moveSelection(2, -1);
+        if (m_rotation_mode){
+            if (program)
+                grid->rotateSelection(program, 2, -1);
+        }else{
+            grid->moveSelection(2, -1);
+        }
         update();
     }
     if( event->key() == Qt::Key_Down) {
-        grid->moveSelection(2, 1);
+        if (m_rotation_mode){
+            if (program)
+                grid->rotateSelection(program, 2, 1);
+        }else{
+            grid->moveSelection(2, 1);
+        }
         update();
     }
 
@@ -520,9 +557,9 @@ void MainViewer::open_mesh() {
         TileModel * modeleViewer = new TileModel(m_modeles.size(),fileName);
         qDebug() << fileName << "was opened successfully";
 
-        m_modeles.push_back(*modele);
+        m_modeles.push_back(modele);
         for(int i = 0 ;i<m_modeles.size();i++){
-            qDebug()<<m_modeles[i].mesh().vertices.size();
+            qDebug()<<m_modeles[i]->mesh().vertices.size();
         }
 
         // Création d'un dock à gauche du mainViewer si pas déjà fait
@@ -574,6 +611,8 @@ void MainViewer::open_mesh() {
         infosLayout->addWidget(toggleButton);
 
         m_modelsLayout->addWidget(modelWidget);
+
+        m_create_init_grid->setEnabled(true);
         update();
     }
 }
@@ -609,6 +648,7 @@ void MainViewer::create_initialization_grid() {
             setSceneCenter(qglviewer::Vec(boxSize / 2.0, boxSize / 2.0, boxSize / 2.0));
             setSceneRadius(boxSize);
             show();
+            m_open_mesh->setEnabled(false);
             QDialog *dialog = new QDialog(this);
             dialog->setWindowTitle("Liste des modèles");
             dialog->setModal(false);
@@ -619,7 +659,7 @@ void MainViewer::create_initialization_grid() {
             modelList->setMinimumHeight(200);
 
             for (int i = 0; i < m_modeles.size(); ++i) {
-                modelList->addItem(m_modeles[i].getName());
+                modelList->addItem(m_modeles[i]->getName());
             }
 
             connect(modelList, &QListWidget::itemDoubleClicked, this, &MainViewer::onModelDoubleClicked);
@@ -660,7 +700,7 @@ void MainViewer::onModelDoubleClicked(QListWidgetItem *item) {
     };
 
     // Préparer les vecteurs de rotation initiaux
-    TileModel &model = m_modeles[modelIndex];
+    TileModel model = *m_modeles[modelIndex];
     QVector<bool> rotx = model.getXRot();  // Supposez que vous avez des getters appropriés
     QVector<bool> roty = model.getYRot();
     QVector<bool> rotz = model.getZRot();
@@ -690,7 +730,7 @@ void MainViewer::onModelDoubleClicked(QListWidgetItem *item) {
 
 void MainViewer::onOrientationButtonClicked(int modelIndex, const QString &axis, int angle) {
     // Accéder au modèle correspondant
-    TileModel &model = m_modeles[modelIndex];
+    TileModel model = *m_modeles[modelIndex];
 
     // Préparer les vecteurs de rotation
     QVector<bool> rotx = model.getXRot();
@@ -789,6 +829,17 @@ void MainViewer::showControls()
     controls->show();
 }
 
+void MainViewer::toggleRotation(){
+
+    if (m_enable_rotation->isChecked()){
+        m_enable_rotation->setIcon(QIcon("./icons/lock.png"));
+    } else {
+        m_enable_rotation->setIcon(QIcon("./icons/unlock.png"));
+    }
+
+    m_rotation_mode = m_enable_rotation->isChecked();
+}
+
 void MainViewer::addMeshToSelectedCell(){
     QPushButton* button = qobject_cast<QPushButton*>(sender());
 
@@ -812,9 +863,15 @@ void MainViewer::addMeshToSelectedCell(){
         return;
     }
 
-    TileInstance *tileInstance = new TileInstance(&m_modeles[basicViewer->tileModel().id()]);
     int x, y, z;
     grid->getCoordinates(grid->selectedCellIdx(), x, y, z);
+
+    Cell cell = grid->getCell(x, y, z);
+    if (cell.hasMesh){
+        grid->deleteInstance(x, y, z);
+    }
+
+    TileInstance *tileInstance = new TileInstance(m_modeles[basicViewer->tileModel().id()]);
     grid->setObject(*tileInstance, x, y, z, 0, 0, 0);
 
     grid->initializeBuffers(program);
@@ -827,11 +884,11 @@ void MainViewer::addMeshToSelectedCell(){
  * Nécessaires pour load les modeles pour ini
  */
 
-QVector<TileModel> MainViewer::getModeles(){
+QVector<TileModel*> MainViewer::getModeles(){
     return m_modeles;
 }
 
-void MainViewer::setModeles(QVector<TileModel> modeles){
+void MainViewer::setModeles(QVector<TileModel*> modeles){
     m_modeles=modeles;
 }
 

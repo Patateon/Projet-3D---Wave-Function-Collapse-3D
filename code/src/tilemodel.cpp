@@ -103,6 +103,8 @@ void TileModel::setMesh(QString filename)
     }
 
     computeBoundingBox();
+    centerMesh();
+    computeBoundingBox();
 }
 
 void TileModel::setRules(QSet<int> rules_xminus,QSet<int> rules_xplus,QSet<int> rules_yminus,QSet<int> rules_yplus,QSet<int> rules_zminus,QSet<int> rules_zplus){
@@ -149,7 +151,7 @@ QSet<int> TileModel::getZPlus(){
     return m_rules_zplus;
 }
 
-void TileModel::setType(QVector<TileModel> &modeles,int mode){
+void TileModel::setType(QVector<TileModel*> &modeles,int mode){
     if(mode==0){
         float meanN=(m_rules_xminus.size()+m_rules_xplus.size()+m_rules_yminus.size()+m_rules_yplus.size()+m_rules_zminus.size()+m_rules_zplus.size())/6.0f;
         if(meanN<=modeles.size()/2){
@@ -184,6 +186,7 @@ bool TileModel::operator<(const TileModel & other) const{
 }
 
 void TileModel::computeBoundingBox() {
+
     if (m_mesh == nullptr){
         return;
     }
@@ -207,6 +210,48 @@ void TileModel::computeBoundingBox() {
             }
         }
     }
+}
+
+void TileModel::centerMesh(){
+
+    // Appellé uniquement après computeBoudingBox
+
+    if (m_mesh == nullptr){
+        qWarning() << "Could not normalize mesh";
+        return;
+    }
+
+    QVector3D center = (m_bbmax + m_bbmin) / 2.0f;
+
+    // if (size.x() == 0 && size.y() == 0 && size.z() == 0){
+    //     qWarning() << "Could not normalize mesh";
+    //     return;
+    // }
+
+    // for (uint i = 0; i < m_mesh->vertices.size(); i++){
+
+    //     mesh().vertices[i].p[0] = ((2.0f * mesh().vertices[i].p.x() - m_bbmin.x())
+    //                                / size.x()) - 1.0f;
+    //     mesh().vertices[i].p[1] = ((2.0f * mesh().vertices[i].p.y() - m_bbmin.y())
+    //                                / size.y()) - 1.0f;
+    //     mesh().vertices[i].p[2] = ((2.0f * mesh().vertices[i].p.z() - m_bbmin.z())
+    //                                / size.z()) - 1.0f;
+    // }
+
+    // QVector3D barycentre = QVector3D();
+
+    // for (uint i =0 ; i < mesh().vertices.size(); i++){
+    //     point3d p = mesh().vertices[i].p;
+    //     barycentre += QVector3D(p.x(), p.y(), p.z());
+    // }
+
+    // barycentre /= mesh().vertices.size();
+
+    for (uint i = 0; i < mesh().vertices.size(); i++){
+        point3d c = point3d(center.x(), center.y(), center.z());
+        mesh().vertices[i].p -= c;
+    }
+
 }
 
 QVector<bool> TileModel::getXRot(){

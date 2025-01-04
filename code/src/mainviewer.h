@@ -65,11 +65,16 @@ private :
     bool m_wired = false;
     bool m_showgrid = true;
     bool m_model_layout_initialized = false;
+    bool m_rotation_mode = false;
 
     QMainWindow *m_mainWindow;
     QVBoxLayout *m_modelsLayout;
 
-    QVector<TileModel> m_modeles;
+    DetailedAction * m_open_mesh;
+    DetailedAction * m_create_init_grid;
+    DetailedAction * m_enable_rotation;
+
+    QVector<TileModel*> m_modeles;
     QListWidget *modelList;
 
 public :
@@ -103,8 +108,8 @@ public :
     void mouseMoveEvent(QMouseEvent* e  ) override;
     void mouseReleaseEvent(QMouseEvent* e  ) override;
 
-    QVector<TileModel> getModeles();
-    void setModeles(QVector<TileModel> modeles);
+    QVector<TileModel*> getModeles();
+    void setModeles(QVector<TileModel*> modeles);
 
     void setMainWindow(QMainWindow *mainWindow);
 
@@ -120,6 +125,7 @@ public slots:
     void showControls();
 
     void addMeshToSelectedCell();
+    void toggleRotation();
 
     void onModelDoubleClicked(QListWidgetItem *item);
     void onOrientationButtonClicked(int modelIndex, const QString &axis, int angle);

@@ -27,6 +27,8 @@ public:
     void loadOBJ(QString filename);
 
     void computeBoundingBox();
+    void centerMesh();
+
     QVector<QSet<int>*> getRules();
     QSet<int> getXMinus();
     QSet<int> getXPlus();
@@ -40,7 +42,7 @@ public:
     QVector<bool> getZRot();
     void setRots(QVector<bool> rotx,QVector<bool> roty,QVector<bool> rotz);
     int getType() const;
-    void setType(QVector<TileModel> &modeles,int mode);
+    void setType(QVector<TileModel*> &modeles, int mode);
     bool operator<(const TileModel & other) const;
     QString getName();
 private:
