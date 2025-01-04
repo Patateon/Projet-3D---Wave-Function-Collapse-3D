@@ -2,6 +2,7 @@
 #define GRID_H
 
 #include <QVector3D>
+#include <QVector>
 #include <QOpenGLFunctions_4_5_Core>
 #include <QOpenGLShaderProgram>
 #include <vector>
@@ -29,14 +30,14 @@ public:
     void setObject(TileInstance object, int x, int y, int z);
     void setObject(TileInstance object, int x, int y, int z,float x_rot,float y_rot, float z_rot);
     void setModeles(QVector<TileModel> modeles);
-
+    QVector<TileModel> getModeles();
     // Draw Functions
     void initializeBuffers(QOpenGLShaderProgram* program);
     void render(QOpenGLShaderProgram* program);
     void clean();
   
     bool isTypeClose(int x, int y, int z, uint type);
-    void createRules();
+    QVector<TileModel> createRules();
     // Debug Functions
     void drawNormales(QOpenGLShaderProgram* program);
     void printGrid();

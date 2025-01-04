@@ -166,6 +166,7 @@ void MainViewer::initializeBasicWFC(uint dimension, float spacing) {
     std::cout<<"mode : "<<grid->getMode()<<std::endl;;
     wfc->runWFC(5, modeles,grid->getMode());
     grid->printGrid();
+    QVector<TileModel>  modelRules =grid->createRules();
     grid->initializeBuffers(program);
 }
 
