@@ -219,7 +219,7 @@ void Wfc::initWFC(int k, QVector<TileModel> &modeles, int mode) {
                         TileInstance instance(new TileModel(model), transform);
                         //On set l'objet
                         m_grid.setObject(instance, randomX, randomY, randomZ, x_rot_value, y_rot_value, z_rot_value);
-
+                        cellsDone.push_back(QVector3D(randomX, randomY, randomZ));
                         for (int j = 0; j < voisins.size(); j++) {
                             m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).entropy++;
                         }
@@ -287,7 +287,7 @@ void Wfc::initWFC(int k, QVector<TileModel> &modeles, int mode) {
                                 }
                                 //On set l'objet
                                 m_grid.setObject(instance, randomX, randomY, randomZ, x_deg, y_deg, z_deg);
-
+                                cellsDone.push_back(QVector3D(randomX, randomY, randomZ));
                                 for (int j = 0; j < voisins.size(); j++) {
                                     m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).entropy++;
                                 }

@@ -304,7 +304,7 @@ void MainViewer::init() {
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
-    QOpenGLExtraFunctions *f = context()->extraFunctions();
+    QOpenGLExtraFunctions *f = QOpenGLContext::currentContext()->extraFunctions();
     f->glDebugMessageCallback(MessageCallback, nullptr);
 
     setMouseTracking(true);// Needed for MouseGrabber.
