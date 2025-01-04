@@ -5,7 +5,8 @@ INCLUDEPATH += .
 INCLUDEPATH += ./src
 QT += opengl xml
 CONFIG += qt \
-    release
+    release \
+    debug
 MOC_DIR = ./tmp/moc
 OBJECTS_DIR = ./tmp/obj
 
@@ -17,6 +18,7 @@ HEADERS += ./src/point3.h \
     ./src/gl/BasicColors.h \
     ./src/tilemodel.h \
     src/OBJ_Loader.h \
+    src/basicviewer.h \
     src/mainviewer.h \
     src/material.h \
     src/tileinstance.h \
@@ -27,6 +29,7 @@ SOURCES += ./src/main.cpp \
     ./src/gl/GLUtilityMethods.cpp\
     ./src/gl/BasicColors.cpp \
     ./src/tilemodel.cpp \
+    src/basicviewer.cpp \
     src/mainviewer.cpp \
     src/material.cpp \
     src/tileinstance.cpp \
@@ -62,6 +65,9 @@ release:QMAKE_CFLAGS_RELEASE += -O3 \
     -fopenmp
 
 DISTFILES += \
+    shaders/basicViewer.vert \
     shaders/gshader.glsl \
+    shaders/lineFShader.glsl \
+    shaders/lineVShader.glsl \
     src/shader/fshader.glsl \
     src/shader/vshader.glsl

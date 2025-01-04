@@ -7,6 +7,7 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
+#include <QOpenGLContext>
 
 struct Vertex{
     point3d p;
@@ -113,10 +114,6 @@ struct Mesh{
                 || normales[nIt].p.z() != 0){
                 normales[nIt].p.normalize();
             }
-//            std::cout << normales[nIt].p.x()
-//                      << normales[nIt].p.y()
-//                      << normales[nIt].p.z()
-//                      << std::endl;
         }
     }
 
@@ -200,6 +197,7 @@ struct Mesh{
     void render(QOpenGLShaderProgram* program) {
         program->bind();
         if (vao == nullptr){
+            qWarning() << "VAO is not initialized";
             return;
         }
         vao->bind();
@@ -215,6 +213,9 @@ struct Mesh{
     }
 
     void clear() {
+        if (vao == nullptr){
+            return;
+        }
         vao->destroy();
         vbo_vertex->destroy();
         vbo_normales->destroy();

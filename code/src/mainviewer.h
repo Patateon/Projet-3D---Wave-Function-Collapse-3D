@@ -28,8 +28,16 @@
 #include <QLineEdit>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLFunctions>
+#include <QSplitter>
+#include <QListWidget>
+#include <QMainWindow>
+#include <QPushButton>
+#include <QApplication>
+#include <QDesktopWidget>
 
 #include "qt/QSmartAction.h"
+
+#include "basicviewer.h"
 #include "grid.h"
 #include "wfc.h"
 
@@ -43,35 +51,43 @@ class MainViewer : public QGLViewer , public QOpenGLFunctions_4_3_Core
     Wfc * wfc;
 
     QOpenGLShaderProgram *program = nullptr;
-
-    GLuint vertexPosition = 0;
-    GLuint vertexNormal = 0;
-    GLuint vertexColor = 0;
+    QOpenGLShaderProgram *gridLineShader = nullptr;
 
     QWidget * controls;
 
 private :
+    // Infos de la grille
+    uint m_dimension;
+    float m_spacing;
+
     float m_scale_normal = 1.0;
     bool m_display_normal = true;
-
     bool m_wired = false;
+    bool m_showgrid = true;
+    bool m_model_layout_initialized = false;
+
+    QMainWindow *m_mainWindow;
+    QVBoxLayout *m_modelsLayout;
+
+    QVector<TileModel> m_modeles;
+    QListWidget *modelList;
 
 public :
 
-    MainViewer(QGLWidget * parent = NULL) : QGLViewer(parent) , QOpenGLFunctions_4_3_Core() {
-    }
+    explicit MainViewer(QGLWidget *parent = nullptr);
     ~MainViewer();
 
     void add_actions_to_toolBar(QToolBar *toolBar);
     void pickBackgroundColor();
     void adjustCamera( point3d const & bb , point3d const & BB );
 
-    void initializeModels();
+    void initModelsViewer();
     void initializeGrid();
     void initializeRandomGrid(uint dimension, float spacing);
     void initializeBasicWFC(uint dimension, float spacing);
-
+    void initGrid(uint dimension,float spacing);
     void initializeProgramShader();
+    void initializeGridLineShader();
     void initializeShaders();
 
     void init() override;
@@ -87,22 +103,28 @@ public :
     void mouseMoveEvent(QMouseEvent* e  ) override;
     void mouseReleaseEvent(QMouseEvent* e  ) override;
 
+    QVector<TileModel> getModeles();
+    void setModeles(QVector<TileModel> modeles);
+
+    void setMainWindow(QMainWindow *mainWindow);
+
 signals:
     void windowTitleUpdated( const QString & );
 
 public slots:
     void open_mesh();
+    void create_initialization_grid();
+
     void save_mesh();
 
     void showControls();
 
-    void saveCameraInFile(const QString &filename);
-    void openCameraFromFile(const QString &filename);
+    void addMeshToSelectedCell();
 
-    void openCamera();
-    void saveCamera();
-
-    void saveSnapShotPlusPlus();
+    void onModelDoubleClicked(QListWidgetItem *item);
+    void onOrientationButtonClicked(int modelIndex, const QString &axis, int angle);
+    void updateButtonColor(QPushButton *button, const QString &axis, int angle, const QVector<bool> &rotx, const QVector<bool> &roty, const QVector<bool> &rotz);
+    void updateButtonColors(const QVector<bool> &rotx, const QVector<bool> &roty, const QVector<bool> &rotz);
 };
 
 #endif // MAINVIEWER_H

@@ -15,20 +15,26 @@ TileModel::TileModel(uint id, QString filename)
 {
     m_id = id;
     setMesh(filename);
+    QFileInfo fileInfo(filename);
+    m_name = fileInfo.fileName();
+    m_rotx=QVector<bool>(3,false);
+    m_roty=QVector<bool>(3,false);
+    m_rotz=QVector<bool>(3,false);
 }
 
 TileModel::TileModel(uint id, QSet<int> rules)
 {
     m_id = id;
     m_rules=rules;
-
 }
 
 TileModel::~TileModel(){
-
+    qDebug() << "Deleting TileModel" << m_id;
+    // delete m_mesh;
 }
 
 void TileModel::loadOBJ(QString filename){
+    Mesh *mesh = new Mesh;
     objl::Loader loader;
 
     bool loaded = loader.LoadFile(filename.toStdString());
@@ -37,7 +43,6 @@ void TileModel::loadOBJ(QString filename){
         qWarning() << "Could not load obj : " << filename;
         return;
     }
-    qDebug() << "Current mesh : " << filename;
 
     if(loader.LoadedMeshes.size() != 1) {
         qWarning() << "Unexpected number of meshes "
@@ -47,16 +52,16 @@ void TileModel::loadOBJ(QString filename){
 
     objl::Mesh currentMesh = loader.LoadedMeshes[0];
 
-    m_mesh.vertices.resize(currentMesh.Vertices.size());
+    mesh->vertices.resize(currentMesh.Vertices.size());
     for(uint i = 0; i < currentMesh.Vertices.size(); i++){
-        m_mesh.vertices[i] = Vertex(currentMesh.Vertices[i].Position.X,
+        mesh->vertices[i] = Vertex(currentMesh.Vertices[i].Position.X,
                                     currentMesh.Vertices[i].Position.Y,
                                     currentMesh.Vertices[i].Position.Z);
     }
 
-    m_mesh.normales.resize(currentMesh.Vertices.size());
+    mesh->normales.resize(currentMesh.Vertices.size());
     for(uint i = 0; i < currentMesh.Vertices.size(); i++){
-        m_mesh.normales[i] = Vertex(currentMesh.Vertices[i].Normal.X,
+        mesh->normales[i] = Vertex(currentMesh.Vertices[i].Normal.X,
                                     currentMesh.Vertices[i].Normal.Y,
                                     currentMesh.Vertices[i].Normal.Z);
     }
@@ -66,21 +71,27 @@ void TileModel::loadOBJ(QString filename){
         t[0] = currentMesh.Indices[i];
         t[1] = currentMesh.Indices[i+1];
         t[2] = currentMesh.Indices[i+2];
-        m_mesh.triangles.push_back(t);
+        mesh->triangles.push_back(t);
     }
+
+    m_mesh = mesh;
 }
 
 
 void TileModel::setMesh(QString filename)
 {
     if (filename.endsWith(".off")){
+        Mesh * mesh = new Mesh;
         OFFIO::openTriMesh(filename.toStdString(),
-                                     m_mesh.vertices,
-                                     m_mesh.triangles);
-        m_mesh.computeNormales();
+                                     mesh->vertices,
+                                     mesh->triangles);
+        mesh->computeNormales();
+        m_mesh = mesh;
     }else if (filename.endsWith(".obj")){
         // Suppose la présence de normales
         loadOBJ(filename);
+    }else {
+        return;
     }
 
     computeBoundingBox();
@@ -118,6 +129,9 @@ bool TileModel::operator<(const TileModel & other) const{
 }
 
 void TileModel::computeBoundingBox() {
+    if (m_mesh == nullptr){
+        return;
+    }
 
     if (mesh().vertices.size() <= 0){
         m_bbmin = QVector3D(0.0f, 0.0f, 0.0f);
@@ -150,5 +164,9 @@ QVector<bool> TileModel::getYRot(){
 
 QVector<bool> TileModel::getZRot(){
     return m_rotz;
+}
+
+QString TileModel::getName(){
+    return m_name;
 }
 

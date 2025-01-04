@@ -57,5 +57,6 @@ compile_commands.json
 .qtc_clangd
 
 # Autres
+.vscode
 qmake_qmake_immediate.qrc
 wfc
