@@ -344,15 +344,6 @@ QVector<TileModel> Grid::createRules(){//Créer les règles a partir d'une grill
         models[i].setRules(rulesT[i][0],rulesT[i][1],rulesT[i][2],rulesT[i][3],rulesT[i][4],rulesT[i][5]);
         models[i].setRots(rotT[i][0],rotT[i][1],rotT[i][2]);
     }
-    for(int i = 0;i<rulesT.size();i++){
-        qDebug() << "Regles modele "<<i;
-        qDebug() << "xminus :"<< rulesT[i][0];
-        qDebug() << "xplus :"<<rulesT[i][1];
-        qDebug() << "yminus :"<< rulesT[i][2];
-        qDebug() << "yplus :" <<rulesT[i][3];
-        qDebug() << "zminus :"<<rulesT[i][4];
-        qDebug() << "zplus :"<<rulesT[i][5];
-    }
     return models;
 }
 
