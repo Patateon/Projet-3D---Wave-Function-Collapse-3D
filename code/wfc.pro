@@ -5,7 +5,8 @@ INCLUDEPATH += .
 INCLUDEPATH += ./src
 QT += opengl xml
 CONFIG += qt \
-    release
+    release \
+    debug
 MOC_DIR = ./tmp/moc
 OBJECTS_DIR = ./tmp/obj
 

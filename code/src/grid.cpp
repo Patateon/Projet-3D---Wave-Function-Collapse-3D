@@ -1,8 +1,15 @@
 #include "grid.h"
 
-Cell::Cell() : hasMesh(false), object(nullptr) {}
 
-Grid::Grid() : resX(0), resY(0), resZ(0), linesInitialized(false) {}
+Cell::Cell()
+    : hasMesh(false), object(nullptr)
+{}
+
+Grid::Grid()
+    : resX(0),resY(0), resZ(0), linesInitialized(false)
+{
+    selectCell(0, 0, 0);
+}
 
 Grid::Grid(
     int X, int Y, int Z,
@@ -17,6 +24,7 @@ Grid::Grid(
     dimY = dim_y;
     dimZ = dim_z;
     BBmin = bbMin;
+    selectCell(0, 0, 0);
     modelPos.resize(nModel); // Redimensionner selon nModel
     for (int i = 0; i < nModel; ++i) {
         modelPos[i].clear();  // Ini vecteur vide
@@ -29,7 +37,7 @@ Grid::Grid(
 
 Grid::~Grid() {
     // Nettoyage du VBO
-    lineVBO.destroy();
+    clean();
 }
 
 Cell& Grid::getCell(int x, int y, int z) {
@@ -40,6 +48,14 @@ Cell& Grid::getCell(int x, int y, int z) {
 uint Grid::getCellIndex(int x, int y, int z) const {
     return x + resX * (y + resY * z);
 }
+
+void Grid::getCoordinates(uint index, int& x, int& y, int& z) const {
+    z = index / (resX * resY);
+    uint remainder2D = index % (resX * resY);
+    y = remainder2D / resX;
+    x = remainder2D % resX;
+}
+
 
 void Grid::setObject(TileInstance object, int x, int y, int z, float x_deg, float y_deg, float z_deg) {
     Cell& cell = getCell(x, y, z);
@@ -55,7 +71,7 @@ void Grid::setObject(TileInstance object, int x, int y, int z, float x_deg, floa
 
     QVector3D scale(scaling, scaling, scaling);
     QVector3D translate(x * dimX, y * dimY, z * dimZ);
-    translate = BBmin + translate;
+    translate = 2*BBmin + translate;
 
     cell.object.transform().scale() = scale;
     cell.object.transform().translation() = translate;
@@ -71,12 +87,6 @@ void Grid::initializeBuffers(QOpenGLShaderProgram* program) {
     if (modelPos.size() != modelMatrixes.size()) {
         qWarning() << "Error: modelPos and modelMatrixes size mismatch!";
         return;
-    }
-
-    for (int i = 0; i < modelPos.size(); i++) {
-        qDebug() << "Number of type("
-                 << i << ") = "
-                 << modelPos[i].size();
     }
 
     initializeOpenGLFunctions();
@@ -120,19 +130,35 @@ void Grid::initializeBuffers(QOpenGLShaderProgram* program) {
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     program->release();
+    m_gridInitialized = true;
 }
 
 void Grid::render(QOpenGLShaderProgram* program) {
+
+
+    if (!m_gridInitialized){
+        return;
+    }
+
     program->bind();
     for (int i = 0; i < modelPos.size(); ++i) {
         int numInstances = modelPos[i].size();
         if (numInstances > 0) {
+
+            if (!modeles[i].mesh().vao->isCreated()) {
+                qWarning() << "Invalid VAO for model" << i;
+                continue;
+            }
+
             modeles[i].mesh().vao->bind();
             if (matrixVBO[i] != 0) {
                 glBindBuffer(GL_ARRAY_BUFFER, matrixVBO[i]);
             } else {
                 continue;
             }
+
+            qDebug() << modeles[i].mesh().vertices.size();
+            qDebug() << modeles[i].mesh().triangles.size();
 
             glDrawElementsInstanced(
                 GL_TRIANGLES,
@@ -141,12 +167,13 @@ void Grid::render(QOpenGLShaderProgram* program) {
                 0,
                 numInstances
                 );
-            glBindVertexArray(0);
+
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             modeles[i].mesh().vao->release();
         }
     }
     program->release();
+    drawCell();
 }
 
 void Grid::setModeles(QVector<TileModel> modeles) {
@@ -189,6 +216,108 @@ void Grid::printGrid() {
     }
 }
 
+// Selection functions
+void Grid::selectCell(uint x, uint y, uint z)
+{
+    selectedCell = getCellIndex(x, y, z);
+    selectedCellCoord = QVector3D(x*dimX, y*dimY, z*dimZ) + BBmin;
+}
+
+void Grid::unselectCell()
+{
+    selectedCell = -1;
+}
+
+void Grid::moveSelection(int axis, int step){
+
+    int x, y, z;
+    getCoordinates(selectedCell, x, y, z);
+
+    if (axis == 0)
+    {
+        x = std::max(0, std::min(resX-1, x + step));
+    }
+    else if (axis == 1)
+    {
+        y = std::max(0, std::min(resY-1, y + step));
+    }
+    else if (axis == 2)
+    {
+        z = std::max(0, std::min(resZ-1, z + step));
+    }
+    else
+    {
+        qWarning("Wrong axis selected: Should be 0 (X), 1 (Y) or 2(Z)");
+        return;
+    }
+
+    selectCell(x, y, z);
+}
+
+void Grid::displayCell(bool showGrid){
+    m_showSelectedCell = showGrid;
+}
+
+void Grid::drawCell()
+{
+    // Force à moi, TODO
+    if (selectedCell == -1 || !m_showSelectedCell){
+        return;
+    }
+    initializeOpenGLFunctions();
+
+    // Affichage de la cellule actuellement selectionnée avec du
+    // legacy OpenGL
+    glDisable(GL_LIGHTING);
+    glLineWidth(5.0f);
+
+    QVector3D p0 = selectedCellCoord;
+    QVector3D p1 = selectedCellCoord + QVector3D(dimX, 0.0f, 0.0f);
+    QVector3D p2 = selectedCellCoord + QVector3D(dimX, 0.0f, dimZ);
+    QVector3D p3 = selectedCellCoord + QVector3D(0.0f, 0.0f, dimZ);
+    QVector3D p4 = selectedCellCoord + QVector3D(0.0f, dimY, 0.0f);
+    QVector3D p5 = selectedCellCoord + QVector3D(dimX, dimY, 0.0f);
+    QVector3D p6 = selectedCellCoord + QVector3D(dimX, dimY, dimZ);
+    QVector3D p7 = selectedCellCoord + QVector3D(0.0f, dimY, dimZ);
+
+    glBegin(GL_LINES);
+
+    glColor3f(1.0f, 0.5f, 0.0f);
+
+    // Affichage des lignes de la cellule sélectionnée
+    glVertex3f(p0.x(), p0.y(), p0.z());
+    glVertex3f(p1.x(), p1.y(), p1.z());
+    glVertex3f(p1.x(), p1.y(), p1.z());
+    glVertex3f(p2.x(), p2.y(), p2.z());
+    glVertex3f(p2.x(), p2.y(), p2.z());
+    glVertex3f(p3.x(), p3.y(), p3.z());
+    glVertex3f(p3.x(), p3.y(), p3.z());
+    glVertex3f(p0.x(), p0.y(), p0.z());
+
+    glVertex3f(p4.x(), p4.y(), p4.z());
+    glVertex3f(p5.x(), p5.y(), p5.z());
+    glVertex3f(p5.x(), p5.y(), p5.z());
+    glVertex3f(p6.x(), p6.y(), p6.z());
+    glVertex3f(p6.x(), p6.y(), p6.z());
+    glVertex3f(p7.x(), p7.y(), p7.z());
+    glVertex3f(p7.x(), p7.y(), p7.z());
+    glVertex3f(p4.x(), p4.y(), p4.z());
+
+    glVertex3f(p0.x(), p0.y(), p0.z());
+    glVertex3f(p4.x(), p4.y(), p4.z());
+    glVertex3f(p1.x(), p1.y(), p1.z());
+    glVertex3f(p5.x(), p5.y(), p5.z());
+    glVertex3f(p2.x(), p2.y(), p2.z());
+    glVertex3f(p6.x(), p6.y(), p6.z());
+    glVertex3f(p3.x(), p3.y(), p3.z());
+    glVertex3f(p7.x(), p7.y(), p7.z());
+
+    glEnd();
+
+    glLineWidth(1.0f);
+    glEnable(GL_LIGHTING);
+}
+
 void Grid::clean() {
     // Iterate through all cells and reset them
     for (int z = 0; z < resZ; ++z) {
@@ -218,6 +347,8 @@ void Grid::clean() {
             vbo = 0;
         }
     }
+
+    lineVBO.destroy();
 }
 
 QVector3D Grid::getCellCoordinates(int x, int y, int z) {

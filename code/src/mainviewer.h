@@ -56,6 +56,10 @@ class MainViewer : public QGLViewer , public QOpenGLFunctions_4_3_Core
     QWidget * controls;
 
 private :
+    // Infos de la grille
+    uint m_dimension;
+    float m_spacing;
+
     float m_scale_normal = 1.0;
     bool m_display_normal = true;
     bool m_wired = false;
@@ -114,6 +118,8 @@ public slots:
     void save_mesh();
 
     void showControls();
+
+    void addMeshToSelectedCell();
 
     void onModelDoubleClicked(QListWidgetItem *item);
     void onOrientationButtonClicked(int modelIndex, const QString &axis, int angle);

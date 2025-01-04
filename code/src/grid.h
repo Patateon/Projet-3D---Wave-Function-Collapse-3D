@@ -28,10 +28,23 @@ public:
     int getZ() { return resZ; }
     Cell& getCell(int x, int y, int z);
     uint getCellIndex(int x, int y, int z) const;
+    void getCoordinates(uint index, int& x, int& y, int& z) const;
     QVector3D getCellCoordinates(int x, int y, int z);
     void setObject(TileInstance object, int x, int y, int z);
     void setObject(TileInstance object, int x, int y, int z, float x_rot, float y_rot, float z_rot);
     void setModeles(QVector<TileModel> modeles);
+    QVector<TileModel> getModeles() {return modeles;}
+
+    // Function to selected a particular select and display it
+    void selectCell(uint x, uint y, uint z);
+    void unselectCell();
+    void drawCell();
+    bool isDisplayingCell() {return m_showSelectedCell;}
+    void displayCell(bool showGrid);
+    // Function to move the selected Cell
+    void moveSelection(int axis, int step);
+    int selectedCellIdx() {return selectedCell;}
+
 
     // Draw Functions
     void initializeBuffers(QOpenGLShaderProgram* program);
@@ -62,11 +75,14 @@ private:
     QVector<QVector<QMatrix4x4>> modelMatrixes;
     QVector<GLuint> matrixVBO;
     QVector<TileModel> modeles; // Charger les modeles a mettre dans le MyViewer?
-    QOpenGLContext *openGLcontext;
-    QOpenGLFunctions *glFuncs;
+
+    int selectedCell = -1; // Indice de la cellule actuellement sélectionner, -1 si pas sélectionner
+    QVector3D selectedCellCoord;
+    bool m_showSelectedCell = true;
 
     std::vector<QVector3D> gridLines; // Lignes de la grille
     QOpenGLBuffer lineVBO; // VBO pour les lignes de la grille
+    bool m_gridInitialized = false;
     bool linesInitialized; // Indique si les lignes de la grille ont été initialisées
 };
 

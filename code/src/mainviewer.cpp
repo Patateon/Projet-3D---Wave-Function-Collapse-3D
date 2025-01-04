@@ -1,6 +1,48 @@
 #include "mainviewer.h"
 #include "basicviewer.h"
 #include <QDockWidget>
+#include <QScrollArea>
+#include <QLabel>
+
+#include <QDebug>
+#include <GL/gl.h>
+
+#include <QOpenGLExtraFunctions>
+
+// OpenGL debug callback function
+void APIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
+{
+    // Print basic message
+    qDebug() << "OpenGL Debug Message:";
+    qDebug() << "Source: " << source;
+    qDebug() << "Type: " << type;
+    qDebug() << "ID: " << id;
+    qDebug() << "Severity: " << severity;
+    qDebug() << "Message: " << message;
+
+    // You can also categorize the messages based on the type or severity, for example:
+    switch (severity) {
+    case GL_DEBUG_SEVERITY_HIGH:
+        qDebug() << "High severity issue!";
+        break;
+    case GL_DEBUG_SEVERITY_MEDIUM:
+        qDebug() << "Medium severity issue!";
+        break;
+    case GL_DEBUG_SEVERITY_LOW:
+        qDebug() << "Low severity issue.";
+        break;
+    default:
+        break;
+    }
+
+    // Optionally, you can terminate the application for critical errors:
+    if (severity == GL_DEBUG_SEVERITY_HIGH) {
+        qDebug() << "Critical OpenGL error, exiting!";
+        std::exit(EXIT_FAILURE);
+    }
+}
+
+
 
 MainViewer::MainViewer(QGLWidget * parent)
     : QGLViewer(parent), QOpenGLFunctions_4_3_Core()
@@ -56,7 +98,13 @@ void MainViewer::initModelsViewer() {
 
         QDockWidget *dock = new QDockWidget();
         dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
-        dock->setWidget(vBoxWidget);
+
+        QScrollArea *scrollarea = new QScrollArea;
+        scrollarea->setWidgetResizable(true);
+        scrollarea->setWidget(vBoxWidget);
+
+        dock->setWidget(scrollarea);
+        dock->setMaximumWidth(350);
 
         m_mainWindow->addDockWidget(Qt::LeftDockWidgetArea, dock);
 
@@ -123,7 +171,7 @@ void MainViewer::initializeBasicWFC(uint dimension, float spacing) {
     QVector<QVector<bool>> x_rot;
     QVector<QVector<bool>> y_rot;
     QVector<QVector<bool>> z_rot;
-  
+
     for(int i = 0; i < modeles.size(); i++){
         modeles[i].mesh().initVAO(program);
     }
@@ -157,11 +205,11 @@ void MainViewer::initializeBasicWFC(uint dimension, float spacing) {
 }
 
 void MainViewer::initGrid(uint dimension, float spacing){
+    makeCurrent();
     grid = new Grid(dimension, dimension, dimension,
                     spacing, spacing, spacing,
                     QVector3D(spacing/2.0, spacing/2.0, spacing/2.0), 4);
     grid->setModeles(m_modeles);
-
 }
 
 void MainViewer::initializeShaders() {
@@ -222,6 +270,12 @@ void MainViewer::init() {
     makeCurrent();
     initializeShaders();
 
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+
+    QOpenGLExtraFunctions *f = context()->extraFunctions();
+    f->glDebugMessageCallback(MessageCallback, nullptr);
+
     setMouseTracking(true);// Needed for MouseGrabber.
 
     setBackgroundColor(QColor(255,255,255));
@@ -235,7 +289,6 @@ void MainViewer::init() {
     glShadeModel(GL_SMOOTH);
     glFrontFace(GL_CCW); // CCW ou CW
 
-    glEnable(GL_DEPTH);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
 
@@ -245,8 +298,14 @@ void MainViewer::init() {
 
     glEnable(GL_COLOR_MATERIAL);
 
-    //initializeBasicWFC(3, 1);
-    grid->initGridLines(program);
+    initializeBasicWFC(3, 1);
+    if (grid){
+        for(int i = 0; i < grid->getModeles().size(); i++){
+            grid->getModeles()[i].mesh().initVAO(program);
+        }
+        grid->initGridLines(gridLineShader);
+        grid->initializeBuffers(program);
+    }
 
     showEntireScene();
 
@@ -254,6 +313,10 @@ void MainViewer::init() {
 
 void MainViewer::draw() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    if (!grid){
+        return;
+    }
 
     if (m_wired) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -332,13 +395,46 @@ void MainViewer::updateTitle( QString text ) {
 void MainViewer::keyPressEvent( QKeyEvent * event ) {
     if( event->key() == Qt::Key_G) {
         m_showgrid = !m_showgrid;
+        update();
     }
     if( event->key() == Qt::Key_W) {
         m_wired = !m_wired;
+        update();
+    }
+    if( event->key() == Qt::Key_S) {
+        grid->displayCell(!grid->isDisplayingCell());
+        update();
     }
     if( event->key() == Qt::Key_H ) {
         help();
     }
+
+    // Cell selection movement
+    if( event->key() == Qt::Key_Left) {
+        grid->moveSelection(0, -1);
+        update();
+    }
+    if( event->key() == Qt::Key_Right) {
+        grid->moveSelection(0, 1);
+        update();
+    }
+    if( event->key() == Qt::Key_Control) {
+        grid->moveSelection(1, -1);
+        update();
+    }
+    if( event->key() == Qt::Key_Space) {
+        grid->moveSelection(1, 1);
+        update();
+    }
+    if( event->key() == Qt::Key_Up) {
+        grid->moveSelection(2, -1);
+        update();
+    }
+    if( event->key() == Qt::Key_Down) {
+        grid->moveSelection(2, 1);
+        update();
+    }
+
     else if( event->key() == Qt::Key_T ) {
         if( event->modifiers() & Qt::CTRL )
         {
@@ -390,6 +486,7 @@ void MainViewer::open_mesh() {
     if ( !fileName.isNull() ) { // got a file name
 
         TileModel * modele = new TileModel(m_modeles.size(),fileName);
+        TileModel * modeleViewer = new TileModel(m_modeles.size(),fileName);
         qDebug() << fileName << "was opened successfully";
 
         m_modeles.push_back(*modele);
@@ -397,23 +494,55 @@ void MainViewer::open_mesh() {
             qDebug()<<m_modeles[i].mesh().vertices.size();
         }
 
+        // Création d'un dock à gauche du mainViewer si pas déjà fait
         initModelsViewer();
 
-        BasicViewer *basicViewer = new BasicViewer();
-        basicViewer->setMaximumSize(200, 150);
-        basicViewer->setParent(this);
-        basicViewer->setTileModel(modele);
-        m_modelsLayout->addWidget(basicViewer);
+        // Widget contenant un basic viewer et ses infos
+        QWidget *modelWidget = new QWidget;
+        modelWidget->setParent(this);
+        modelWidget->setMaximumWidth(350);
+        modelWidget->setObjectName("modelWidget");
+        modelWidget->setStyleSheet(
+            "#modelWidget {border: 2px solid black; border-radius: 2px;}");
 
-        /*
-        point3d bb(FLT_MAX, FLT_MAX, FLT_MAX) , BB(-FLT_MAX, -FLT_MAX, -FLT_MAX);
-        for( unsigned int v = 0 ; v < mesh.vertices.size() ; ++v ) {
-            bb = point3d::min(bb , mesh.vertices[v]);
-            BB = point3d::max(BB , mesh.vertices[v]);
-        }
-        adjustCamera(bb,BB);
-        mesh.initVAO(program);
-        */
+        QHBoxLayout *qhboxlayout = new QHBoxLayout;
+        modelWidget->setLayout(qhboxlayout);
+
+        // Setup d'un basic viewer pour afficher le modèle chargé
+        BasicViewer *basicViewer = new BasicViewer;
+        basicViewer->setTileModel(modeleViewer);
+        basicViewer->setMaximumSize(200, 150);
+        basicViewer->setMinimumSize(150, 150);
+        qhboxlayout->addWidget(basicViewer);
+
+        // Widget contenant les infos relatives à un modèle
+        // Ainsi qu'un bouton pour le sélectionner
+        QWidget *modelInfos = new QWidget;
+        QVBoxLayout *infosLayout = new QVBoxLayout;
+        infosLayout->setAlignment(Qt::AlignTop);
+        modelInfos->setLayout(infosLayout);
+        qhboxlayout->addWidget(modelInfos);
+
+        QPushButton *toggleButton = new QPushButton;
+        toggleButton->setText(tr("Select"));
+        connect(toggleButton, &QPushButton::pressed,
+                this, &MainViewer::addMeshToSelectedCell);
+
+        QLabel *name = new QLabel;
+        name->setText(tr("Name :\n") + modeleViewer->getName());
+        QLabel *vertices = new QLabel;
+        vertices->setText(tr("Number of vertices :\n")
+                      + QString::number(modeleViewer->mesh().vertices.size()));
+        QLabel *triangles = new QLabel;
+        triangles->setText(tr("Number of triangles :\n")
+                      + QString::number(modeleViewer->mesh().triangles.size()));
+
+        infosLayout->addWidget(name);
+        infosLayout->addWidget(vertices);
+        infosLayout->addWidget(triangles);
+        infosLayout->addWidget(toggleButton);
+
+        m_modelsLayout->addWidget(modelWidget);
         update();
     }
 }
@@ -442,7 +571,9 @@ void MainViewer::create_initialization_grid() {
             0, 0, 100, 2, &ok);
 
         if (ok) {
-            initGrid(value1, value2);
+            m_dimension = value1;
+            m_spacing = value2;
+            // initGrid(value1, value2);
             float boxSize = (float)value1 * value2;
             setSceneCenter(qglviewer::Vec(boxSize / 2.0, boxSize / 2.0, boxSize / 2.0));
             setSceneRadius(boxSize);
@@ -627,6 +758,38 @@ void MainViewer::showControls()
     controls->show();
 }
 
+void MainViewer::addMeshToSelectedCell(){
+    QPushButton* button = qobject_cast<QPushButton*>(sender());
+
+    BasicViewer* basicViewer;
+
+    // Manière un peu sale de récupérer le viewer à partir du bouton qui a été pressé
+    for (auto child: button->parent()->parent()->children()){
+        basicViewer = qobject_cast<BasicViewer*>(child);
+        if (basicViewer){
+            break;
+        }
+    }
+
+    if (!basicViewer){
+        qWarning() << "Could not find the basic viewer";
+        return;
+    }
+
+    if (!grid){
+        qWarning() << "No grid generated";
+        return;
+    }
+
+    TileInstance *tileInstance = new TileInstance(&m_modeles[basicViewer->tileModel().id()]);
+    int x, y, z;
+    grid->getCoordinates(grid->selectedCellIdx(), x, y, z);
+    grid->setObject(*tileInstance, x, y, z, 0, 0, 0);
+
+    grid->initializeBuffers(program);
+
+    update();
+}
 
 
 /*

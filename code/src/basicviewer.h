@@ -9,6 +9,7 @@
 
 class BasicViewer : public QGLViewer , public QOpenGLFunctions_4_3_Core
 {
+    Q_OBJECT
 public:
     TileModel & tileModel() {return *m_tilemodel;}
     void setTileModel(TileModel * tileModel);

@@ -7,6 +7,7 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
+#include <QOpenGLContext>
 
 struct Vertex{
     point3d p;
