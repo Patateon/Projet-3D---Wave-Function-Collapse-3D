@@ -213,6 +213,9 @@ struct Mesh{
     }
 
     void clear() {
+        if (vao == nullptr){
+            return;
+        }
         vao->destroy();
         vbo_vertex->destroy();
         vbo_normales->destroy();

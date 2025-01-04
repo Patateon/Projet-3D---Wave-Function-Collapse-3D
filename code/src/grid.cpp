@@ -135,7 +135,6 @@ void Grid::initializeBuffers(QOpenGLShaderProgram* program) {
 
 void Grid::render(QOpenGLShaderProgram* program) {
 
-
     if (!m_gridInitialized){
         return;
     }
@@ -156,9 +155,6 @@ void Grid::render(QOpenGLShaderProgram* program) {
             } else {
                 continue;
             }
-
-            qDebug() << modeles[i].mesh().vertices.size();
-            qDebug() << modeles[i].mesh().triangles.size();
 
             glDrawElementsInstanced(
                 GL_TRIANGLES,

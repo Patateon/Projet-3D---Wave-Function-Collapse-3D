@@ -298,7 +298,7 @@ void MainViewer::init() {
 
     glEnable(GL_COLOR_MATERIAL);
 
-    initializeBasicWFC(3, 1);
+    // initializeBasicWFC(3, 1);
     if (grid){
         for(int i = 0; i < grid->getModeles().size(); i++){
             grid->getModeles()[i].mesh().initVAO(program);
@@ -573,7 +573,7 @@ void MainViewer::create_initialization_grid() {
         if (ok) {
             m_dimension = value1;
             m_spacing = value2;
-            // initGrid(value1, value2);
+            initGrid(value1, value2);
             float boxSize = (float)value1 * value2;
             setSceneCenter(qglviewer::Vec(boxSize / 2.0, boxSize / 2.0, boxSize / 2.0));
             setSceneRadius(boxSize);

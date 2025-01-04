@@ -29,7 +29,8 @@ TileModel::TileModel(uint id, QSet<int> rules)
 }
 
 TileModel::~TileModel(){
-    delete m_mesh;
+    qDebug() << "Deleting TileModel" << m_id;
+    // delete m_mesh;
 }
 
 void TileModel::loadOBJ(QString filename){
@@ -89,6 +90,8 @@ void TileModel::setMesh(QString filename)
     }else if (filename.endsWith(".obj")){
         // Suppose la présence de normales
         loadOBJ(filename);
+    }else {
+        return;
     }
 
     computeBoundingBox();
@@ -126,10 +129,10 @@ bool TileModel::operator<(const TileModel & other) const{
 }
 
 void TileModel::computeBoundingBox() {
-    qDebug() << "Mesh pointer:" << &mesh();
-    std::vector< Vertex > vertices = mesh().vertices;
-    qDebug() << vertices[0].p.x();
-    // qDebug() << "Vertices pointer:" << mesh().vertices.size();
+    if (m_mesh == nullptr){
+        return;
+    }
+
     if (mesh().vertices.size() <= 0){
         m_bbmin = QVector3D(0.0f, 0.0f, 0.0f);
         m_bbmax = QVector3D(0.0f, 0.0f, 0.0f);
