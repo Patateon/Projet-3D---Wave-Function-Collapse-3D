@@ -497,9 +497,9 @@ QVector<TileModel*> Grid::createRules(){//Créer les règles a partir d'une gril
                     //Récupération rotation
                     Transform transform =getCell(x,y,z).object.transform();
                     QVector3D angles = transform.getRotationAngles();
-                    int indexX=std::abs(angles[0]/90.0f);
-                    int indexY=std::abs(angles[1]/90.0f);
-                    int indexZ=std::abs(angles[2]/90.0f);
+                    int indexX=std::abs(angles[0]/90.0f+1);
+                    int indexY=std::abs(angles[1]/90.0f+1);
+                    int indexZ=std::abs(angles[2]/90.0f+1);
                     rotT[id][0][indexX]=1;rotT[id][1][indexY]=1;rotT[id][2][indexZ]=1;
                     if(mode==0){
                         QVector<QSet<int>> rules(6);//regles du modeles en cours id

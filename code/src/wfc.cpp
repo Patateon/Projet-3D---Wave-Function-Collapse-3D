@@ -277,7 +277,6 @@ void Wfc::initWFC(int k, QVector<TileModel*> &modeles, int mode) {
                                         if (y_rot[j] == 1) y_possible_rot.push_back(j * 90);
                                         if (z_rot[j] == 1) z_possible_rot.push_back(j * 90);
                                     }
-
                                     std::uniform_int_distribution<> disRotX(0, x_possible_rot.size() - 1);
                                     std::uniform_int_distribution<> disRotY(0, y_possible_rot.size() - 1);
                                     std::uniform_int_distribution<> disRotZ(0, z_possible_rot.size() - 1);
