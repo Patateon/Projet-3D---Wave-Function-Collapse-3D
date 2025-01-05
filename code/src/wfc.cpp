@@ -89,6 +89,27 @@ int Wfc::findVectorPrio(QVector<QVector3D> vector,QVector<QVector3D> cellsDone){
     }
 }
 
+QVector3D approxAngle(QVector3D &angle) {
+    float epsilon = 5.0f;
+    float tolerance = 0.1f;
+    if (fabs(angle.x() + 90.0f) < tolerance) angle.setX(270.0f);
+    if (fabs(angle.y() + 90.0f) < tolerance) angle.setY(270.0f);
+    if (fabs(angle.z() + 90.0f) < tolerance) angle.setZ(270.0f);
+    for (int i = 0; i < 4; i++) {
+
+        if (angle.x() > (i * 90) - epsilon && angle.x() < (i * 90) + epsilon) {
+            angle.setX(i * 90);
+        }
+        if (angle.y() > (i * 90) - epsilon && angle.y() < (i * 90) + epsilon) {
+            angle.setY(i * 90);
+        }
+        if (angle.z() > (i * 90) - epsilon && angle.z() < (i * 90) + epsilon) {
+            angle.setZ(i * 90);
+        }
+    }
+    return angle;
+}
+
 void Wfc::initWFC(int k, QVector<TileModel*> &modeles, int mode) {
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -253,6 +274,7 @@ void Wfc::initWFC(int k, QVector<TileModel*> &modeles, int mode) {
                                                                     cellsDone[posPrio].y(),
                                                                     cellsDone[posPrio].z()).object.transform();
                                 QVector3D angles = transformCopy.getRotationAngles();
+                                angles=approxAngle(angles);
                                 int indexX = std::abs(angles[0] / 90.0f);
                                 int indexY = std::abs(angles[1] / 90.0f);
                                 int indexZ = std::abs(angles[2] / 90.0f);
@@ -453,6 +475,7 @@ void Wfc::runWFC(int k, QVector<TileModel*> &modeles, int mode) {
                         int posPrio = findVectorPrio(voisins, cellsDone);
                         Transform transformCopy = m_grid.getCell(cellsDone[posPrio].x(), cellsDone[posPrio].y(), cellsDone[posPrio].z()).object.transform();
                         QVector3D angles = transformCopy.getRotationAngles();
+                        angles=approxAngle(angles);
                         int indexX = std::abs(angles[0] / 90.0f);
                         int indexY = std::abs(angles[1] / 90.0f);
                         int indexZ = std::abs(angles[2] / 90.0f);

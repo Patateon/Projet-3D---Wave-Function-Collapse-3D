@@ -476,7 +476,7 @@ int getAxisSign(QVector3D vec){
 }
 QVector3D approxAngle(QVector3D &angle) {
     float epsilon = 5.0f;
-    float tolerance = 0.001f;
+    float tolerance = 0.1f;
     if (fabs(angle.x() + 90.0f) < tolerance) angle.setX(270.0f);
     if (fabs(angle.y() + 90.0f) < tolerance) angle.setY(270.0f);
     if (fabs(angle.z() + 90.0f) < tolerance) angle.setZ(270.0f);
