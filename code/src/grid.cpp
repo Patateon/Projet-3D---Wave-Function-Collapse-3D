@@ -474,7 +474,8 @@ int getAxisSign(QVector3D vec){
     if(vec.z()==-1) return 4;
     if(vec.z()==1) return 5;
 }
-QVector3D approxAngle(QVector3D &angle) {
+
+QVector3D Grid::approxAngle(QVector3D &angle) {
     float epsilon = 5.0f;
     float tolerance = 0.1f;
     if (fabs(angle.x() + 90.0f) < tolerance) angle.setX(270.0f);

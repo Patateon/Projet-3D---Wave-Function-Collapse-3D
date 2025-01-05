@@ -64,6 +64,8 @@ public:
     // Debug Functions
     void drawNormales(QOpenGLShaderProgram* program);
     void printGrid();
+    QVector3D approxAngle(QVector3D &angle);
+
 
     int getMode();
     void setMode(int mode);
