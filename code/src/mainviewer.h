@@ -57,8 +57,8 @@ class MainViewer : public QGLViewer , public QOpenGLFunctions_4_3_Core
 
 private :
     // Infos de la grille
-    uint m_dimension;
-    float m_spacing;
+    QVector3D m_dimension;
+    QVector3D m_spacing;
 
     float m_scale_normal = 1.0;
     bool m_display_normal = true;
@@ -95,7 +95,7 @@ public :
     void initializeGrid();
     void initializeRandomGrid(uint dimension, float spacing);
     void initializeBasicWFC(uint dimension, float spacing);
-    void initGrid(uint dimension,float spacing);
+    void initGrid();
     void initializeProgramShader();
     void initializeGridLineShader();
     void initializeShaders();

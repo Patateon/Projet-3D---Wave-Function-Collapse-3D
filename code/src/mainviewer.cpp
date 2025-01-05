@@ -11,6 +11,7 @@
 #include <QDialogButtonBox>
 #include <QMessageBox>
 #include <QRadioButton>
+#include <QSpinBox>
 
 // OpenGL debug callback function
 void APIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
@@ -253,10 +254,10 @@ void MainViewer::initializeBasicWFC(uint dimension, float spacing) {
     grid->initializeBuffers(program);
 }
 
-void MainViewer::initGrid(uint dimension, float spacing){
+void MainViewer::initGrid(){
     makeCurrent();
-    grid = new Grid(dimension, dimension, dimension,
-                    spacing, spacing, spacing,
+    grid = new Grid(m_dimension.x(), m_dimension.y(), m_dimension.z(),
+                    m_spacing.x(), m_spacing.y(), m_spacing.z(),
                     QVector3D()/*QVector3D(spacing/2.0, spacing/2.0, spacing/2.0)*/, 4);
     grid->setModeles(m_modeles);
 }
@@ -626,58 +627,102 @@ void MainViewer::open_mesh() {
 }
 
 void MainViewer::create_initialization_grid() {
-    bool ok;
 
-    QInputDialog *inputDialog = new QInputDialog(this);
-    inputDialog->setLabelText(tr("Entrer la résolution de la grille :"));
-    inputDialog->setTextValue(QString::number(0));
-    inputDialog->setDoubleRange(-10000, 10000);
-    inputDialog->setDoubleDecimals(2);
-    inputDialog->resize(400, 200);
+    QDialog *dialog = new QDialog();
+    dialog->setWindowTitle("Paramètres de la grilles");
+    dialog->setModal(true);
 
-    double value1 = inputDialog->getDouble(this,
-                                           tr("Résolution de la grille"),
-                                           tr("Résolution :"),
-                                           0, 0, 1000, 2, &ok);
-    if (ok) {
-        inputDialog->setLabelText(tr("Entrer la taille des cellules :"));
+    QFormLayout *formLayout = new QFormLayout();
+    dialog->setLayout(formLayout);
 
-        double value2 = inputDialog->getDouble(
-            this,
-            tr("Taille des cellules"),
-            tr("Taille de cellule :"),
-            0, 0, 100, 2, &ok);
+    QLabel *resLabel = new QLabel("Résolution de la grille :");
+    formLayout->addRow(resLabel);
 
-        if (ok) {
-            m_dimension = value1;
-            m_spacing = value2;
-            initGrid(value1, value2);
-            float boxSize = (float)value1 * value2;
-            setSceneCenter(qglviewer::Vec(boxSize / 2.0, boxSize / 2.0, boxSize / 2.0));
-            setSceneRadius(boxSize);
-            show();
-            m_open_mesh->setEnabled(false);
-            m_generated_rule->setEnabled(true);
-            QDialog *dialog = new QDialog(this);
-            dialog->setWindowTitle("Liste des modèles");
-            dialog->setModal(false);
-            QVBoxLayout *layout = new QVBoxLayout(dialog);
+    QSpinBox *resXSpinBox = new QSpinBox();
+    resXSpinBox->setMinimum(1);
+    resXSpinBox->setMaximum(10000);
+    resXSpinBox->setValue(1);
 
-            modelList = new QListWidget(dialog); // Assignez à la variable membre
-            modelList->setMinimumWidth(200);
-            modelList->setMinimumHeight(200);
+    QSpinBox *resYSpinBox = new QSpinBox();
+    resYSpinBox->setMinimum(1);
+    resYSpinBox->setMaximum(10000);
+    resYSpinBox->setValue(1);
 
-            for (int i = 0; i < m_modeles.size(); ++i) {
-                modelList->addItem(m_modeles[i]->getName());
-            }
+    QSpinBox *resZSpinBox = new QSpinBox();
+    resZSpinBox->setMinimum(1);
+    resZSpinBox->setMaximum(10000);
+    resZSpinBox->setValue(1);
 
-            connect(modelList, &QListWidget::itemDoubleClicked, this, &MainViewer::onModelDoubleClicked);
-            layout->addWidget(modelList);
-            dialog->resize(300, 300);
-            // dialog->show();
-        }
+    QHBoxLayout *resLayout = new QHBoxLayout();
+    formLayout->addRow(resLayout);
+
+    resLayout->addWidget(resXSpinBox);
+    resLayout->addWidget(resYSpinBox);
+    resLayout->addWidget(resZSpinBox);
+
+    QLabel *cellSizeLabel = new QLabel("Taille des cellules :");
+    formLayout->addRow(cellSizeLabel);
+
+    QSpinBox *cellSizeXSpinBox = new QSpinBox();
+    cellSizeXSpinBox->setMinimum(1);
+    cellSizeXSpinBox->setMaximum(100);
+    cellSizeXSpinBox->setValue(1);
+
+    QSpinBox *cellSizeYSpinBox = new QSpinBox();
+    cellSizeYSpinBox->setMinimum(1);
+    cellSizeYSpinBox->setMaximum(100);
+    cellSizeYSpinBox->setValue(1);
+
+    QSpinBox *cellSizeZSpinBox = new QSpinBox();
+    cellSizeZSpinBox->setMinimum(1);
+    cellSizeZSpinBox->setMaximum(100);
+    cellSizeZSpinBox->setValue(1);
+
+    QHBoxLayout *cellSizeLayout = new QHBoxLayout();
+    formLayout->addRow(cellSizeLayout);
+    cellSizeLayout->addWidget(cellSizeXSpinBox);
+    cellSizeLayout->addWidget(cellSizeYSpinBox);
+    cellSizeLayout->addWidget(cellSizeZSpinBox);
+
+    QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    formLayout->addRow(buttonBox);
+
+    connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
+
+    connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+
+    if (dialog->exec() == QDialog::Accepted){
+        m_dimension = QVector3D(resXSpinBox->value(), resYSpinBox->value(), resZSpinBox->value());
+        m_spacing = QVector3D(cellSizeXSpinBox->value(), cellSizeYSpinBox->value(), cellSizeZSpinBox->value());
+        initGrid();
+        float maxDimension = fmax(m_dimension.x(), fmax(m_dimension.y(), m_dimension.z()));
+        float maxSpacing = fmax(m_spacing.x(), fmax(m_spacing.y(), m_spacing.z()));
+        float boxSize = (float)maxDimension * maxSpacing;
+        setSceneCenter(qglviewer::Vec(boxSize / 2.0, boxSize / 2.0, boxSize / 2.0));
+        setSceneRadius(boxSize);
+        show();
+        m_open_mesh->setEnabled(false);
+        m_generated_rule->setEnabled(true);
+
+
+        // QDialog *dialog = new QDialog(this);
+        // dialog->setWindowTitle("Liste des modèles");
+        // dialog->setModal(false);
+        // QVBoxLayout *layout = new QVBoxLayout(dialog);
+
+        // modelList = new QListWidget(dialog); // Assignez à la variable membre
+        // modelList->setMinimumWidth(200);
+        // modelList->setMinimumHeight(200);
+
+        // for (int i = 0; i < m_modeles.size(); ++i) {
+        //     modelList->addItem(m_modeles[i]->getName());
+        // }
+
+        // connect(modelList, &QListWidget::itemDoubleClicked, this, &MainViewer::onModelDoubleClicked);
+        // layout->addWidget(modelList);
+        // dialog->resize(300, 300);
+        // dialog->show();
     }
-    delete inputDialog;
 }
 
 void MainViewer::onModelDoubleClicked(QListWidgetItem *item) {
@@ -933,64 +978,120 @@ void MainViewer::generateRules(){
 }
 
 void MainViewer::initializeWFC() {
-    bool ok;
+    QDialog *dialog = new QDialog();
+    dialog->setWindowTitle("Paramètres de la grilles");
+    dialog->setModal(true);
 
-    QInputDialog *inputDialog = new QInputDialog(this);
-    inputDialog->setLabelText(tr("Entrer la résolution de la grille :"));
-    inputDialog->setTextValue(QString::number(0));
-    inputDialog->setDoubleRange(-10000, 10000);
-    inputDialog->setDoubleDecimals(2);
-    inputDialog->resize(400, 200);
+    QFormLayout *formLayout = new QFormLayout();
+    dialog->setLayout(formLayout);
 
-    double value1 = inputDialog->getDouble(this,
-                                           tr("Résolution de la grille"),
-                                           tr("Résolution :"),
-                                           1, 1, 1000, 2, &ok);
-    if (ok) {
-        inputDialog->setLabelText(tr("Entrer la taille des cellules :"));
+    QLabel *resLabel = new QLabel("Résolution de la grille :");
+    formLayout->addRow(resLabel);
 
-        double value2 = inputDialog->getDouble(
-            this,
-            tr("Taille des cellules"),
-            tr("Taille de cellule :"),
-            0.1, 1, 100, 2, &ok);
+    QSpinBox *resXSpinBox = new QSpinBox();
+    resXSpinBox->setMinimum(1);
+    resXSpinBox->setMaximum(10000);
+    resXSpinBox->setValue(1);
 
-        if (ok) {
-            inputDialog->setLabelText(tr("Cellules à l'initialisation:"));
+    QSpinBox *resYSpinBox = new QSpinBox();
+    resYSpinBox->setMinimum(1);
+    resYSpinBox->setMaximum(10000);
+    resYSpinBox->setValue(1);
 
-            int valueK = inputDialog->getInt(
-                this,
-                tr("Valeur de k"),
-                tr("k :"),
-                5, 1, 100, 1, &ok);
+    QSpinBox *resZSpinBox = new QSpinBox();
+    resZSpinBox->setMinimum(1);
+    resZSpinBox->setMaximum(10000);
+    resZSpinBox->setValue(1);
 
-            if (ok) {
-                m_dimension = value1;
-                m_spacing = value2;
+    QHBoxLayout *resLayout = new QHBoxLayout();
+    formLayout->addRow(resLayout);
 
-                grid->clean();
-                grid = new Grid(m_dimension, m_dimension, m_dimension,
-                                m_spacing, m_spacing, m_spacing,
-                                QVector3D(m_spacing / 2, m_spacing / 2, m_spacing / 2), m_modeles.size());
+    resLayout->addWidget(resXSpinBox);
+    resLayout->addWidget(resYSpinBox);
+    resLayout->addWidget(resZSpinBox);
 
-                grid->setModeles(m_modeles);
+    QLabel *cellSizeLabel = new QLabel("Taille des cellules :");
+    formLayout->addRow(cellSizeLabel);
 
-                Wfc wfc(*grid);
-                for (int i = 0; i < m_modeles.size(); i++) {
-                    m_modeles[i]->setType(m_modeles, m_mode);
-                }
-                wfc.runWFC(valueK, m_modeles, grid->getMode());
+    QSpinBox *cellSizeXSpinBox = new QSpinBox();
+    cellSizeXSpinBox->setMinimum(1);
+    cellSizeXSpinBox->setMaximum(100);
+    cellSizeXSpinBox->setValue(1);
 
-                float boxSize = (float)value1 * value2;
-                setSceneCenter(qglviewer::Vec(boxSize / 2.0, boxSize / 2.0, boxSize / 2.0));
-                setSceneRadius(boxSize);
+    QSpinBox *cellSizeYSpinBox = new QSpinBox();
+    cellSizeYSpinBox->setMinimum(1);
+    cellSizeYSpinBox->setMaximum(100);
+    cellSizeYSpinBox->setValue(1);
 
-                init();
-                show();
-            }
+    QSpinBox *cellSizeZSpinBox = new QSpinBox();
+    cellSizeZSpinBox->setMinimum(1);
+    cellSizeZSpinBox->setMaximum(100);
+    cellSizeZSpinBox->setValue(1);
+
+    QHBoxLayout *cellSizeLayout = new QHBoxLayout();
+    formLayout->addRow(cellSizeLayout);
+    cellSizeLayout->addWidget(cellSizeXSpinBox);
+    cellSizeLayout->addWidget(cellSizeYSpinBox);
+    cellSizeLayout->addWidget(cellSizeZSpinBox);
+
+    QSpinBox *iterationSpinBox = new QSpinBox();
+    iterationSpinBox->setMinimum(1);
+    iterationSpinBox->setMaximum(100);
+    iterationSpinBox->setValue(5);
+    formLayout->addRow("Nombre d'itérations :", iterationSpinBox);
+
+    QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    formLayout->addRow(buttonBox);
+
+    connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
+
+    connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+
+    if (dialog->exec() == QDialog::Accepted){
+        m_dimension = QVector3D(resXSpinBox->value(), resYSpinBox->value(), resZSpinBox->value());
+        m_spacing = QVector3D(cellSizeXSpinBox->value(), cellSizeYSpinBox->value(), cellSizeZSpinBox->value());
+
+        grid->clean();
+        grid = new Grid(m_dimension.x(), m_dimension.y(), m_dimension.z(),
+                        m_spacing.x(), m_spacing.y(), m_spacing.z(),
+                        m_spacing / 2, m_modeles.size());
+
+        grid->setModeles(m_modeles);
+
+        Wfc wfc(*grid);
+        for (int i = 0; i < m_modeles.size(); i++) {
+            m_modeles[i]->setType(m_modeles, m_mode);
         }
+        wfc.runWFC(iterationSpinBox->value(), m_modeles, grid->getMode());
+
+        float maxDimension = fmax(m_dimension.x(), fmax(m_dimension.y(), m_dimension.z()));
+        float maxSpacing = fmax(m_spacing.x(), fmax(m_spacing.y(), m_spacing.z()));
+        float boxSize = (float)maxDimension * maxSpacing;
+        setSceneCenter(qglviewer::Vec(boxSize / 2.0, boxSize / 2.0, boxSize / 2.0));
+        setSceneRadius(boxSize);
+
+        init();
+        show();
+
+
+        // QDialog *dialog = new QDialog(this);
+        // dialog->setWindowTitle("Liste des modèles");
+        // dialog->setModal(false);
+        // QVBoxLayout *layout = new QVBoxLayout(dialog);
+
+        // modelList = new QListWidget(dialog); // Assignez à la variable membre
+        // modelList->setMinimumWidth(200);
+        // modelList->setMinimumHeight(200);
+
+        // for (int i = 0; i < m_modeles.size(); ++i) {
+        //     modelList->addItem(m_modeles[i]->getName());
+        // }
+
+        // connect(modelList, &QListWidget::itemDoubleClicked, this, &MainViewer::onModelDoubleClicked);
+        // layout->addWidget(modelList);
+        // dialog->resize(300, 300);
+        // dialog->show();
     }
-    delete inputDialog;
 }
 
 
