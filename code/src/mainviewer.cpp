@@ -8,6 +8,9 @@
 #include <GL/gl.h>
 
 #include <QOpenGLExtraFunctions>
+#include <QDialogButtonBox>
+#include <QMessageBox>
+#include <QRadioButton>
 
 // OpenGL debug callback function
 void APIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
@@ -59,14 +62,23 @@ void MainViewer::add_actions_to_toolBar(QToolBar *toolBar)
     m_open_mesh = new DetailedAction( QIcon("./icons/open.png") , "Open Mesh" , "Open Mesh" , this , this , SLOT(open_mesh()) );
     m_create_init_grid = new DetailedAction( QIcon("./icons/rubik.png") , "Create initialization grid" , "Create initialization grid" , this , this , SLOT(create_initialization_grid()) );
     m_enable_rotation = new DetailedAction( QIcon("./icons/unlock.png") , "Toggle Rotation" , "Toggle Rotation" , this , this , SLOT(toggleRotation()) );
+    m_generated_rule = new DetailedAction( QIcon("./icons/rule.png") , "Generate Rules" , "Generate Rules" , this , this , SLOT(generateRules()) );
+    m_init_wfc = new DetailedAction( QIcon("./icons/wfc.png") , "Initialize WFC" , "Initialize WFC" , this , this , SLOT(initializeWFC()) );
+    m_clear = new DetailedAction( QIcon("./icons/clear.png") , "Clear" , "Clear" , this , this , SLOT(clear()) );
 
     // Add them :
     m_enable_rotation->setCheckable(true);
     m_create_init_grid->setEnabled(false);
+    m_generated_rule->setEnabled(false);
+    m_init_wfc->setEnabled(false);
+    m_clear->setEnabled(false);
 
-    toolBar->addAction( m_open_mesh );
-    toolBar->addAction( m_create_init_grid);
-    toolBar->addAction( m_enable_rotation);
+    toolBar->addAction(m_open_mesh);
+    toolBar->addAction(m_create_init_grid);
+    toolBar->addAction(m_enable_rotation);
+    toolBar->addAction(m_generated_rule);
+    toolBar->addAction(m_init_wfc);
+    toolBar->addAction(m_clear);
 }
 
 void MainViewer::pickBackgroundColor() {
@@ -102,17 +114,17 @@ void MainViewer::initModelsViewer() {
         QWidget *vBoxWidget = new QWidget;
         vBoxWidget->setLayout(m_modelsLayout);
 
-        QDockWidget *dock = new QDockWidget();
-        dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
+        m_dock = new QDockWidget();
+        m_dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
 
         QScrollArea *scrollarea = new QScrollArea;
         scrollarea->setWidgetResizable(true);
         scrollarea->setWidget(vBoxWidget);
 
-        dock->setWidget(scrollarea);
-        dock->setMaximumWidth(350);
+        m_dock->setWidget(scrollarea);
+        m_dock->setMaximumWidth(350);
 
-        m_mainWindow->addDockWidget(Qt::LeftDockWidgetArea, dock);
+        m_mainWindow->addDockWidget(Qt::LeftDockWidgetArea, m_dock);
 
         m_model_layout_initialized = true;
     }
@@ -451,7 +463,7 @@ void MainViewer::keyPressEvent( QKeyEvent * event ) {
     if( event->key() == Qt::Key_Left) {
         if (m_rotation_mode){
             if (program)
-                grid->rotateSelection(program, 0, -1);
+                grid->rotateSelection(program, 1, -1);
         }else{
             grid->moveSelection(0, -1);
         }
@@ -460,7 +472,7 @@ void MainViewer::keyPressEvent( QKeyEvent * event ) {
     if( event->key() == Qt::Key_Right) {
         if (m_rotation_mode){
             if (program)
-            grid->rotateSelection(program, 0, 1);
+            grid->rotateSelection(program, 1, 1);
         }else{
             grid->moveSelection(0, 1);
         }
@@ -469,7 +481,7 @@ void MainViewer::keyPressEvent( QKeyEvent * event ) {
     if( event->key() == Qt::Key_Control) {
         if (m_rotation_mode){
             if (program)
-                grid->rotateSelection(program, 1, -1);
+                grid->rotateSelection(program, 2, -1);
         }else{
             grid->moveSelection(1, -1);
         }
@@ -478,7 +490,7 @@ void MainViewer::keyPressEvent( QKeyEvent * event ) {
     if( event->key() == Qt::Key_Space) {
         if (m_rotation_mode){
             if (program)
-                grid->rotateSelection(program, 1, 1);
+                grid->rotateSelection(program, 2, 1);
         }else{
             grid->moveSelection(1, 1);
         }
@@ -487,7 +499,7 @@ void MainViewer::keyPressEvent( QKeyEvent * event ) {
     if( event->key() == Qt::Key_Up) {
         if (m_rotation_mode){
             if (program)
-                grid->rotateSelection(program, 2, -1);
+                grid->rotateSelection(program, 0, -1);
         }else{
             grid->moveSelection(2, -1);
         }
@@ -496,7 +508,7 @@ void MainViewer::keyPressEvent( QKeyEvent * event ) {
     if( event->key() == Qt::Key_Down) {
         if (m_rotation_mode){
             if (program)
-                grid->rotateSelection(program, 2, 1);
+                grid->rotateSelection(program, 0, 1);
         }else{
             grid->moveSelection(2, 1);
         }
@@ -555,12 +567,8 @@ void MainViewer::open_mesh() {
 
         TileModel * modele = new TileModel(m_modeles.size(),fileName);
         TileModel * modeleViewer = new TileModel(m_modeles.size(),fileName);
-        qDebug() << fileName << "was opened successfully";
 
         m_modeles.push_back(modele);
-        for(int i = 0 ;i<m_modeles.size();i++){
-            qDebug()<<m_modeles[i]->mesh().vertices.size();
-        }
 
         // Création d'un dock à gauche du mainViewer si pas déjà fait
         initModelsViewer();
@@ -649,6 +657,7 @@ void MainViewer::create_initialization_grid() {
             setSceneRadius(boxSize);
             show();
             m_open_mesh->setEnabled(false);
+            m_generated_rule->setEnabled(true);
             QDialog *dialog = new QDialog(this);
             dialog->setWindowTitle("Liste des modèles");
             dialog->setModal(false);
@@ -665,7 +674,7 @@ void MainViewer::create_initialization_grid() {
             connect(modelList, &QListWidget::itemDoubleClicked, this, &MainViewer::onModelDoubleClicked);
             layout->addWidget(modelList);
             dialog->resize(300, 300);
-            dialog->show();
+            // dialog->show();
         }
     }
     delete inputDialog;
@@ -879,6 +888,122 @@ void MainViewer::addMeshToSelectedCell(){
     update();
 }
 
+void MainViewer::generateRules(){
+
+    if(m_modeles.size() == 0){
+        QMessageBox::information(this, "Error", "No models loaded");
+        return;
+    }
+
+    QDialog *dialog = new QDialog;
+    dialog->setWindowTitle("Generate Rules");
+    dialog->setModal(true);
+
+    QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, Qt::Horizontal, dialog);
+    connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
+    connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+
+    QLabel *modeChoice = new QLabel("Choose a mode :");
+    QRadioButton *modeFirstChoice = new QRadioButton("Mode 1");
+    QRadioButton *modeSecondChoice = new QRadioButton("Mode 2");
+
+    modeFirstChoice->setChecked(true);
+
+    QFormLayout form(dialog);
+    dialog->setLayout(&form);
+
+    form.addWidget(modeChoice);
+    form.addWidget(modeFirstChoice);
+    form.addWidget(modeSecondChoice);
+    form.addWidget(buttonBox);
+
+    if (dialog->exec() == QDialog::Accepted) {
+        int mode = 0;
+        if (modeFirstChoice->isChecked()){
+            mode = 0;
+        }else if (modeSecondChoice->isChecked()){
+            mode = 1;
+        }
+        grid->setMode(mode);
+        m_modeles = grid->createRules();
+        m_init_wfc->setEnabled(true);
+
+        QMessageBox::information(this, "Informations", "Rules generated");
+
+    }
+}
+
+void MainViewer::initializeWFC(){
+
+    bool ok;
+
+    QInputDialog *inputDialog = new QInputDialog(this);
+    inputDialog->setLabelText(tr("Entrer la résolution de la grille :"));
+    inputDialog->setTextValue(QString::number(0));
+    inputDialog->setDoubleRange(-10000, 10000);
+    inputDialog->setDoubleDecimals(2);
+    inputDialog->resize(400, 200);
+
+    double value1 = inputDialog->getDouble(this,
+                                           tr("Résolution de la grille"),
+                                           tr("Résolution :"),
+                                           1, 1, 1000, 2, &ok);
+    if (ok) {
+        inputDialog->setLabelText(tr("Entrer la taille des cellules :"));
+
+        double value2 = inputDialog->getDouble(
+            this,
+            tr("Taille des cellules"),
+            tr("Taille de cellule :"),
+            0.1, 1, 100, 2, &ok);
+
+        if (ok) {
+            m_dimension = value1;
+            m_spacing = value2;
+
+            grid->clean();
+            grid = new Grid(m_dimension, m_dimension, m_dimension,
+                            m_spacing, m_spacing, m_spacing,
+                            QVector3D(m_spacing/2, m_spacing/2, m_spacing/2), m_modeles.size());
+
+            grid->setModeles(m_modeles);
+
+            Wfc wfc(*grid);
+            wfc.runWFC(5, m_modeles,grid->getMode());
+
+            float boxSize = (float)value1 * value2;
+            setSceneCenter(qglviewer::Vec(boxSize / 2.0, boxSize / 2.0, boxSize / 2.0));
+            setSceneRadius(boxSize);
+
+            init();
+            show();
+
+        }
+    }
+    delete inputDialog;
+}
+
+void MainViewer::clear(){
+    if (grid){
+        grid->clean();
+    }
+
+    m_modeles.clear();
+    m_create_init_grid->setEnabled(false);
+    m_generated_rule->setEnabled(false);
+    m_init_wfc->setEnabled(false);
+    m_open_mesh->setEnabled(true);
+
+    if (m_model_layout_initialized){
+        m_mainWindow->removeDockWidget(m_dock);
+        delete m_dock;
+        m_model_layout_initialized = false;
+    }
+
+    hide();
+
+    update();
+}
 
 /*
  * Nécessaires pour load les modeles pour ini

@@ -296,31 +296,28 @@ void Grid::rotateSelection(QOpenGLShaderProgram* program, int axis, int step){  
     if (!cell.hasMesh){
         return;
     }
-    QQuaternion rotation = cell.object.transform().rotation();
-    float pitch, yaw, roll;
-    rotation.getEulerAngles(&pitch, &yaw, &roll);
-    qDebug() << axis << pitch << yaw << roll;
+    QQuaternion incrementRotation;
 
     if (axis == 0)
-    {
-        deleteInstance(x, y, z);
-        setObject(cell.object, x, y, z, pitch + step*90, yaw, roll);
-    }
+        incrementRotation = QQuaternion::fromEulerAngles(step * 90, 0, 0);
     else if (axis == 1)
-    {
-        deleteInstance(x, y, z);
-        setObject(cell.object, x, y, z, pitch, yaw + step*90, roll);
-    }
+        incrementRotation = QQuaternion::fromEulerAngles(0, step * 90, 0);
     else if (axis == 2)
-    {
-        deleteInstance(x, y, z);
-        setObject(cell.object, x, y, z, pitch, yaw, roll + step*90);
-    }
-    else
-    {
+        incrementRotation = QQuaternion::fromEulerAngles(0, 0, step * 90);
+    else {
         qWarning("Wrong axis selected: Should be 0 (X), 1 (Y) or 2(Z)");
         return;
     }
+
+    QQuaternion rotation = cell.object.transform().rotation();
+    QQuaternion newRotation = rotation * incrementRotation;
+
+    float pitch, yaw, roll;
+    newRotation.getEulerAngles(&pitch, &yaw, &roll);
+
+    deleteInstance(x, y, z);
+    setObject(cell.object, x, y, z, pitch, yaw, roll);
+
     initializeBuffers(program);
 }
 
@@ -509,7 +506,8 @@ QVector<TileModel*> Grid::createRules(){//Créer les règles a partir d'une gril
                         for(int i=0;i<voisins.size();i++){
                             QVector3D pos=voisins[i];
                             pos=QVector3D(x,y,z)-pos;
-                            rules[getAxisSign(pos)].insert(getCell(voisins[i].x(),voisins[i].y(),voisins[i].z()).object.tileModel()->id());
+                            if(getCell(voisins[i].x(),voisins[i].y(),voisins[i].z()).hasMesh)
+                                rules[getAxisSign(pos)].insert(getCell(voisins[i].x(),voisins[i].y(),voisins[i].z()).object.tileModel()->id());
                         }
                         for(int i=0;i<6;i++){
                             for (int model : rules[i]) {
@@ -551,8 +549,8 @@ int Grid::getMode(){
     return mode;
 }
 
-void Grid::setMode(int mode){
-    mode=mode;
+void Grid::setMode(int m){
+    mode = m;
 }
 
 bool Grid::isInGrid(int x, int y, int z) const {

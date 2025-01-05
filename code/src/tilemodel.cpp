@@ -37,7 +37,6 @@ TileModel::TileModel(uint id, QVector<QSet<int>> rules)
 }
 
 TileModel::~TileModel(){
-    qDebug() << "Deleting TileModel" << m_id;
     // delete m_mesh;
 }
 
@@ -48,7 +47,12 @@ void TileModel::loadOBJ(QString filename){
     bool loaded = loader.LoadFile(filename.toStdString());
 
     if(!loaded){
+        mesh->vertices.clear();
+        mesh->triangles.clear();
+        mesh->normales.clear();
+        m_mesh = mesh;
         qWarning() << "Could not load obj : " << filename;
+        qWarning() << "Loaded as an empty mesh";
         return;
     }
 

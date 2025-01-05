@@ -69,10 +69,14 @@ private :
 
     QMainWindow *m_mainWindow;
     QVBoxLayout *m_modelsLayout;
+    QDockWidget *m_dock;
 
     DetailedAction * m_open_mesh;
     DetailedAction * m_create_init_grid;
     DetailedAction * m_enable_rotation;
+    DetailedAction * m_generated_rule;
+    DetailedAction * m_init_wfc;
+    DetailedAction * m_clear;
 
     QVector<TileModel*> m_modeles;
     QListWidget *modelList;
@@ -126,6 +130,9 @@ public slots:
 
     void addMeshToSelectedCell();
     void toggleRotation();
+    void generateRules();
+    void initializeWFC();
+    void clear();
 
     void onModelDoubleClicked(QListWidgetItem *item);
     void onOrientationButtonClicked(int modelIndex, const QString &axis, int angle);
