@@ -1038,7 +1038,7 @@ void MainViewer::initializeWFC() {
     iterationSpinBox->setMinimum(1);
     iterationSpinBox->setMaximum(100);
     iterationSpinBox->setValue(5);
-    formLayout->addRow("Nombre d'itérations :", iterationSpinBox);
+    formLayout->addRow("Nombre de cellules à l'initialisation :", iterationSpinBox);
 
     QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     formLayout->addRow(buttonBox);
