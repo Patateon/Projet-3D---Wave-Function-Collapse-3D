@@ -474,13 +474,33 @@ int getAxisSign(QVector3D vec){
     if(vec.z()==-1) return 4;
     if(vec.z()==1) return 5;
 }
+QVector3D approxAngle(QVector3D &angle) {
+    float epsilon = 5.0f;
+    float tolerance = 0.1f;
+    if (fabs(angle.x() + 90.0f) < tolerance) angle.setX(270.0f);
+    if (fabs(angle.y() + 90.0f) < tolerance) angle.setY(270.0f);
+    if (fabs(angle.z() + 90.0f) < tolerance) angle.setZ(270.0f);
+    for (int i = 0; i < 4; i++) {
+
+        if (angle.x() > (i * 90) - epsilon && angle.x() < (i * 90) + epsilon) {
+            angle.setX(i * 90);
+        }
+        if (angle.y() > (i * 90) - epsilon && angle.y() < (i * 90) + epsilon) {
+            angle.setY(i * 90);
+        }
+        if (angle.z() > (i * 90) - epsilon && angle.z() < (i * 90) + epsilon) {
+            angle.setZ(i * 90);
+        }
+    }
+    return angle;
+}
+
 
 QVector<TileModel*> Grid::createRules(){//Créer les règles a partir d'une grille contenant juste des tilemodels sans regles
     //Regles de type sont automatiques selon le nombre de voisins par rapport a la taille de modeles
     QVector<TileModel*> models = this->getModeles();
     QVector<QVector<QSet<int>>> rulesT(models.size(), QVector<QSet<int>>(6));
     QVector<QVector<QVector<bool>>> rotT(models.size(), QVector<QVector<bool>>(3, QVector<bool>(4, false)));
-
     for(int x = 0;x<resX;x++){
         for(int y = 0;y<resY;y++){
             for(int z = 0;z<resZ;z++){
@@ -497,15 +517,25 @@ QVector<TileModel*> Grid::createRules(){//Créer les règles a partir d'une gril
                     //Récupération rotation
                     Transform transform =getCell(x,y,z).object.transform();
                     QVector3D angles = transform.getRotationAngles();
-                    int indexX=std::abs(angles[0]/90.0f+1);
-                    int indexY=std::abs(angles[1]/90.0f+1);
-                    int indexZ=std::abs(angles[2]/90.0f+1);
-                    rotT[id][0][indexX]=1;rotT[id][1][indexY]=1;rotT[id][2][indexZ]=1;
+                    angles=approxAngle(angles);
+                    int indexX=std::abs(angles[0]/90.0f);
+                    int indexY=std::abs(angles[1]/90.0f);
+                    int indexZ=std::abs(angles[2]/90.0f);
+                    qDebug()<<angles;
+                    if(indexX!=0){
+                        rotT[id][0][indexX]=1;
+                    }
+                    if(indexY!=0){
+                        rotT[id][1][indexY]=1;
+                    }
+                    if(indexZ!=0){
+                        rotT[id][2][indexZ]=1;
+                    }
                     if(mode==0){
                         QVector<QSet<int>> rules(6);//regles du modeles en cours id
                         for(int i=0;i<voisins.size();i++){
                             QVector3D pos=voisins[i];
-                            pos=QVector3D(x,y,z)-pos;
+                            pos=pos-QVector3D(x,y,z);
                             if(getCell(voisins[i].x(),voisins[i].y(),voisins[i].z()).hasMesh)
                                 rules[getAxisSign(pos)].insert(getCell(voisins[i].x(),voisins[i].y(),voisins[i].z()).object.tileModel()->id());
                         }
@@ -544,6 +574,7 @@ QVector<TileModel*> Grid::createRules(){//Créer les règles a partir d'une gril
     for(int i = 0;i<rulesT.size();i++){
         qDebug()<<"REgle modele "<<i;
         qDebug()<<rulesT[i];
+        qDebug()<<rotT[i];
     }
     return models;
 }
