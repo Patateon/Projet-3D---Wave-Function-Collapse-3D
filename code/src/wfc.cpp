@@ -69,6 +69,7 @@ int Wfc::findVectorPrio(QVector<QVector3D> vector,QVector<QVector3D> cellsDone){
         }
     }
     if(indexOf0.isEmpty()&&indexOf1.isEmpty()){
+        qDebug() << "Indexof0 is empty";
         return -1;
     }
     else if(indexOf1.isEmpty()){
@@ -88,7 +89,7 @@ int Wfc::findVectorPrio(QVector<QVector3D> vector,QVector<QVector3D> cellsDone){
     }
 }
 
-void Wfc::initWFC(int k, QVector<TileModel> &modeles, int mode) {
+void Wfc::initWFC(int k, QVector<TileModel*> &modeles, int mode) {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> disX(0, m_grid.getX() - 1);
@@ -165,33 +166,33 @@ void Wfc::initWFC(int k, QVector<TileModel> &modeles, int mode) {
                         break;
                     }
 
-                    QVector<TileModel> modeleValid = modeles;
+                    QVector<TileModel*> modeleValid = modeles;
                     int total = 0;
                     //Préparation des poids pour distribution aléatoire pondérée
                     for (auto &modele : modeleValid) {
-                        for (int j = 0; j < modele.getRules().size(); j++) {
-                            total += modele.getRules()[j]->size();
+                        for (int j = 0; j < modele->getRules().size(); j++) {
+                            total += modele->getRules()[j]->size();
                         }
                     }
 
                     std::vector<float> weights;
                     for (auto &modele : modeleValid) {
                         int sizeCheck = 0;
-                        for (int j = 0; j < modele.getRules().size(); j++) {
-                            sizeCheck += modele.getRules()[j]->size();
+                        for (int j = 0; j < modele->getRules().size(); j++) {
+                            sizeCheck += modele->getRules()[j]->size();
                         }
                         weights.push_back(static_cast<float>(sizeCheck) / total);
                     }
                     //Choix au hasard selon les poids du modele à tester
                     std::discrete_distribution<> disModele(weights.begin(), weights.end());
                     randomModel = disModele(gen);
-                    rules = modeles[randomModel].getRules();
+                    rules = modeles[randomModel]->getRules();
                     //Cas ou il n'y a pas de règles donc pas de voisins
                     if (ruleSets.isEmpty()) {
                         //Récupération d'une rotation aléatoire selon règles du modele choisi
                         objectSet = true;
                         endModelChoice = true;
-                        TileModel model = modeles[randomModel];
+                        TileModel model = *modeles[randomModel];
 
                         QVector<bool> x_rot = model.getXRot();
                         QVector<bool> y_rot = model.getYRot();
@@ -219,6 +220,7 @@ void Wfc::initWFC(int k, QVector<TileModel> &modeles, int mode) {
                         TileInstance instance(new TileModel(model), transform);
                         //On set l'objet
                         m_grid.setObject(instance, randomX, randomY, randomZ, x_rot_value, y_rot_value, z_rot_value);
+                        cellsDone.push_back(QVector3D(randomX, randomY, randomZ));
 
                         for (int j = 0; j < voisins.size(); j++) {
                             m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).entropy++;
@@ -230,7 +232,7 @@ void Wfc::initWFC(int k, QVector<TileModel> &modeles, int mode) {
                             for (int j = 0; j < voisins.size(); j++) {
                                 if (m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).hasMesh) {
                                     id = m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).object.tileModel()->id();
-                                    QSet set = getCorrespondingRules(voisins[j], QVector3D(randomX, randomY, randomZ), &modeles[randomModel]);
+                                    QSet set = getCorrespondingRules(voisins[j], QVector3D(randomX, randomY, randomZ), modeles[randomModel]);
                                     if (!set.contains(id)) {
                                         ruleBroken = true;
                                         break;
@@ -241,7 +243,7 @@ void Wfc::initWFC(int k, QVector<TileModel> &modeles, int mode) {
                             if (!ruleBroken) {
                                 objectSet = true;
                                 endModelChoice = true;
-                                TileModel model = modeles[randomModel];
+                                TileModel model = *modeles[randomModel];
                                 Transform transform;
                                 TileInstance instance(new TileModel(model), transform);
                                 //On recherche le voisin prioritaire pour copier la rotation
@@ -287,6 +289,7 @@ void Wfc::initWFC(int k, QVector<TileModel> &modeles, int mode) {
                                 }
                                 //On set l'objet
                                 m_grid.setObject(instance, randomX, randomY, randomZ, x_deg, y_deg, z_deg);
+                                cellsDone.push_back(QVector3D(randomX, randomY, randomZ));
 
                                 for (int j = 0; j < voisins.size(); j++) {
                                     m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).entropy++;
@@ -308,7 +311,7 @@ void Wfc::initWFC(int k, QVector<TileModel> &modeles, int mode) {
     m_grid.printGrid();
 }
 
-void Wfc::runWFC(int k, QVector<TileModel> &modeles, int mode) {
+void Wfc::runWFC(int k, QVector<TileModel*> &modeles, int mode) {
     for (int i = 0; i < 30; i++) {
         initWFC(k, modeles, mode);
         bool isFull = false;
@@ -435,7 +438,7 @@ void Wfc::runWFC(int k, QVector<TileModel> &modeles, int mode) {
                     for (int j = 0; j < voisins.size(); j++) {
                         if (m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).hasMesh) {
                             id = m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).object.tileModel()->id();
-                            if (!(getCorrespondingRules(voisins[j], QVector3D(randomX, randomY, randomZ), &modeles[list[randomModel]]).contains(id))) {
+                            if (!(getCorrespondingRules(voisins[j], QVector3D(randomX, randomY, randomZ), modeles[list[randomModel]]).contains(id))) {
                                 ruleBroken = true;
                                 break;
                             }
@@ -444,7 +447,7 @@ void Wfc::runWFC(int k, QVector<TileModel> &modeles, int mode) {
                     //Si aucune règle n'est enfreinte on prépare les rotations
                     if (!ruleBroken) {
                         Transform transform;
-                        TileModel model = modeles[list[randomModel]];
+                        TileModel model = *modeles[list[randomModel]];
                         TileInstance instance(new TileModel(model), transform);
                         //Récupération rotation prioritaire dans voisinage
                         float x_deg, y_deg, z_deg = 0;

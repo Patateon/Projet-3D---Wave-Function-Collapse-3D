@@ -56,6 +56,20 @@ void Grid::getCoordinates(uint index, int& x, int& y, int& z) const {
     x = remainder2D % resX;
 }
 
+void Grid::deleteInstance(uint x, uint y, uint z){
+    Cell& cell = getCell(x, y, z);
+
+    if (!cell.hasMesh) {
+        return;
+    }
+
+    int id = cell.object.tileModel()->id();
+    modelPos[id].removeOne(QVector3D(x, y, z));
+    modelMatrixes[id].removeOne(cell.object.transform().getLocalModel());
+
+    cell.object = nullptr;
+    cell.hasMesh = false;
+}
 
 void Grid::setObject(TileInstance object, int x, int y, int z, float x_deg, float y_deg, float z_deg) {
     Cell& cell = getCell(x, y, z);
@@ -71,11 +85,11 @@ void Grid::setObject(TileInstance object, int x, int y, int z, float x_deg, floa
 
     QVector3D scale(scaling, scaling, scaling);
     QVector3D translate(x * dimX, y * dimY, z * dimZ);
-    translate = 2*BBmin + translate;
+    translate = BBmin + translate + QVector3D(dimX/2, dimY/2, dimZ/2);
+    QQuaternion rotation = QQuaternion::fromEulerAngles(QVector3D(x_deg, y_deg, z_deg));
 
     cell.object.transform().scale() = scale;
     cell.object.transform().translation() = translate;
-    QQuaternion rotation = QQuaternion::fromEulerAngles(QVector3D(x_deg, y_deg, z_deg));
     cell.object.transform().rotation() = rotation;
 
     // On met à jour comme ça pour l'instant
@@ -90,6 +104,13 @@ void Grid::initializeBuffers(QOpenGLShaderProgram* program) {
     }
 
     initializeOpenGLFunctions();
+    // Optionally, clear the matrixVBOs if they need to be re-initialized later
+    for (auto& vbo : matrixVBO) {
+        if (vbo != 0) {
+            glDeleteBuffers(1, &vbo);
+            vbo = 0;
+        }
+    }
 
     program->bind();
 
@@ -111,7 +132,7 @@ void Grid::initializeBuffers(QOpenGLShaderProgram* program) {
                      currentMatrix.data(),
                      GL_STATIC_DRAW);
 
-        QOpenGLVertexArrayObject* VAO = modeles[i].mesh().vao;
+        QOpenGLVertexArrayObject* VAO = modeles[i]->mesh().vao;
         if (VAO && VAO->isCreated()) {
             VAO->bind();
             for (unsigned int k = 0; k < 4; ++k) {
@@ -142,42 +163,54 @@ void Grid::render(QOpenGLShaderProgram* program) {
     program->bind();
     for (int i = 0; i < modelPos.size(); ++i) {
         int numInstances = modelPos[i].size();
+
         if (numInstances > 0) {
 
-            if (!modeles[i].mesh().vao->isCreated()) {
+            if (!modeles[i]->mesh().vao->isCreated()) {
                 qWarning() << "Invalid VAO for model" << i;
                 continue;
             }
 
-            modeles[i].mesh().vao->bind();
+            modeles[i]->mesh().vao->bind();
             if (matrixVBO[i] != 0) {
                 glBindBuffer(GL_ARRAY_BUFFER, matrixVBO[i]);
             } else {
                 continue;
             }
 
+            for (unsigned int k = 0; k < 4; ++k) {
+                glEnableVertexAttribArray(3 + k);
+                glVertexAttribPointer(3 + k,
+                                      4,
+                                      GL_FLOAT,
+                                      GL_FALSE,
+                                      sizeof(QMatrix4x4),
+                                      (void*)(k * sizeof(QVector4D)));
+                glVertexAttribDivisor(3 + k, 1);
+            }
+
             glDrawElementsInstanced(
                 GL_TRIANGLES,
-                modeles[i].mesh().triangles.size() * 3,
+                modeles[i]->mesh().triangles.size() * 3,
                 GL_UNSIGNED_INT,
                 0,
                 numInstances
                 );
 
             glBindBuffer(GL_ARRAY_BUFFER, 0);
-            modeles[i].mesh().vao->release();
+            modeles[i]->mesh().vao->release();
         }
     }
     program->release();
     drawCell();
 }
 
-void Grid::setModeles(QVector<TileModel> modeles) {
+void Grid::setModeles(QVector<TileModel*> modeles) {
     this->modeles = modeles;
 }
 
 
-QVector<TileModel> Grid::getModeles(){
+QVector<TileModel*> Grid::getModeles(){
     return modeles;
 }
 
@@ -185,14 +218,14 @@ void Grid::drawNormales(QOpenGLShaderProgram* program){
     for(int i = 0; i < modelPos.size(); i++){
         int numInstances = modelPos[i].size();
         if (numInstances > 0) {
-            modeles[i].mesh().vao->bind();
+            modeles[i]->mesh().vao->bind();
             if (matrixVBO[i] != 0) {
                 glBindBuffer(GL_ARRAY_BUFFER, matrixVBO[i]);
             } else {
                 continue;
             }
 
-            modeles[i].mesh().renderVAONormalLine(program);
+            modeles[i]->mesh().renderVAONormalLine(program);
             glBindVertexArray(0);
             glBindBuffer(GL_ARRAY_BUFFER, 0);
         }
@@ -256,8 +289,44 @@ void Grid::moveSelection(int axis, int step){
     selectCell(x, y, z);
 }
 
+void Grid::rotateSelection(QOpenGLShaderProgram* program, int axis, int step){    int x, y, z;
+    getCoordinates(selectedCell, x, y, z);
+
+    Cell cell = getCell(x, y, z);
+    if (!cell.hasMesh){
+        return;
+    }
+    QQuaternion incrementRotation;
+
+    if (axis == 0)
+        incrementRotation = QQuaternion::fromEulerAngles(step * 90, 0, 0);
+    else if (axis == 1)
+        incrementRotation = QQuaternion::fromEulerAngles(0, step * 90, 0);
+    else if (axis == 2)
+        incrementRotation = QQuaternion::fromEulerAngles(0, 0, step * 90);
+    else {
+        qWarning("Wrong axis selected: Should be 0 (X), 1 (Y) or 2(Z)");
+        return;
+    }
+
+    QQuaternion rotation = cell.object.transform().rotation();
+    QQuaternion newRotation = rotation * incrementRotation;
+
+    float pitch, yaw, roll;
+    newRotation.getEulerAngles(&pitch, &yaw, &roll);
+
+    deleteInstance(x, y, z);
+    setObject(cell.object, x, y, z, pitch, yaw, roll);
+
+    initializeBuffers(program);
+}
+
 void Grid::displayCell(bool showGrid){
     m_showSelectedCell = showGrid;
+}
+
+void Grid::cleanTransform(){
+
 }
 
 void Grid::drawCell()
@@ -406,9 +475,9 @@ int getAxisSign(QVector3D vec){
     if(vec.z()==1) return 5;
 }
 
-QVector<TileModel> Grid::createRules(){//Créer les règles a partir d'une grille contenant juste des tilemodels sans regles
+QVector<TileModel*> Grid::createRules(){//Créer les règles a partir d'une grille contenant juste des tilemodels sans regles
     //Regles de type sont automatiques selon le nombre de voisins par rapport a la taille de modeles
-    QVector<TileModel> models = this->getModeles();
+    QVector<TileModel*> models = this->getModeles();
     QVector<QVector<QSet<int>>> rulesT(models.size(), QVector<QSet<int>>(6));
     QVector<QVector<QVector<bool>>> rotT(models.size(), QVector<QVector<bool>>(3, QVector<bool>(4, false)));
 
@@ -437,7 +506,8 @@ QVector<TileModel> Grid::createRules(){//Créer les règles a partir d'une grill
                         for(int i=0;i<voisins.size();i++){
                             QVector3D pos=voisins[i];
                             pos=QVector3D(x,y,z)-pos;
-                            rules[getAxisSign(pos)].insert(getCell(voisins[i].x(),voisins[i].y(),voisins[i].z()).object.tileModel()->id());
+                            if(getCell(voisins[i].x(),voisins[i].y(),voisins[i].z()).hasMesh)
+                                rules[getAxisSign(pos)].insert(getCell(voisins[i].x(),voisins[i].y(),voisins[i].z()).object.tileModel()->id());
                         }
                         for(int i=0;i<6;i++){
                             for (int model : rules[i]) {
@@ -468,8 +538,8 @@ QVector<TileModel> Grid::createRules(){//Créer les règles a partir d'une grill
         rotT[id][0][0]=1;rotT[id][1][0]=1;rotT[id][2][0]=1;
     }
     for(int i=0;i<models.size();i++){
-        models[i].setRules(rulesT[i][0],rulesT[i][1],rulesT[i][2],rulesT[i][3],rulesT[i][4],rulesT[i][5]);
-        models[i].setRots(rotT[i][0],rotT[i][1],rotT[i][2]);
+        models[i]->setRules(rulesT[i][0],rulesT[i][1],rulesT[i][2],rulesT[i][3],rulesT[i][4],rulesT[i][5]);
+        models[i]->setRots(rotT[i][0],rotT[i][1],rotT[i][2]);
     }
     return models;
 }
@@ -479,8 +549,8 @@ int Grid::getMode(){
     return mode;
 }
 
-void Grid::setMode(int mode){
-    mode=mode;
+void Grid::setMode(int m){
+    mode = m;
 }
 
 bool Grid::isInGrid(int x, int y, int z) const {
