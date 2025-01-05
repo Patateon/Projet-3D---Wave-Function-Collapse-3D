@@ -80,6 +80,7 @@ private :
 
     QVector<TileModel*> m_modeles;
     QListWidget *modelList;
+    int m_mode;
 
 public :
 

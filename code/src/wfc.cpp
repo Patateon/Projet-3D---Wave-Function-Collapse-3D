@@ -227,7 +227,6 @@ void Wfc::initWFC(int k, QVector<TileModel*> &modeles, int mode) {
                         }
                     } else {
                         //Vérification des règles dans l'autre sens, i.e , voisinage correct pour le modele choisi à la position choisie
-                        if (ruleCheck(ruleSets, randomModel)) {
                             ruleBroken = false;
                             for (int j = 0; j < voisins.size(); j++) {
                                 if (m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).hasMesh) {
@@ -295,7 +294,7 @@ void Wfc::initWFC(int k, QVector<TileModel*> &modeles, int mode) {
                                     m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).entropy++;
                                 }
                             }
-                        }
+
                     }
                 }
 
@@ -335,6 +334,7 @@ void Wfc::runWFC(int k, QVector<TileModel*> &modeles, int mode) {
                 }
             }
         }
+        std::cout<<"cellules apres ini"<<c<<std::endl;
         //Variable de limite d'itération de tentative de remplissage de grille
         int iterationLimit = m_grid.getX() * m_grid.getY() * m_grid.getZ() * 3;
         int iterationCount = 0;

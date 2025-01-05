@@ -505,7 +505,7 @@ QVector<TileModel*> Grid::createRules(){//Créer les règles a partir d'une gril
                         QVector<QSet<int>> rules(6);//regles du modeles en cours id
                         for(int i=0;i<voisins.size();i++){
                             QVector3D pos=voisins[i];
-                            pos=QVector3D(x,y,z)-pos;
+                            pos=QVector3D(x,y,z);
                             if(getCell(voisins[i].x(),voisins[i].y(),voisins[i].z()).hasMesh)
                                 rules[getAxisSign(pos)].insert(getCell(voisins[i].x(),voisins[i].y(),voisins[i].z()).object.tileModel()->id());
                         }
@@ -540,6 +540,10 @@ QVector<TileModel*> Grid::createRules(){//Créer les règles a partir d'une gril
     for(int i=0;i<models.size();i++){
         models[i]->setRules(rulesT[i][0],rulesT[i][1],rulesT[i][2],rulesT[i][3],rulesT[i][4],rulesT[i][5]);
         models[i]->setRots(rotT[i][0],rotT[i][1],rotT[i][2]);
+    }
+    for(int i = 0;i<rulesT.size();i++){
+        qDebug()<<"REgle modele "<<i;
+        qDebug()<<rulesT[i];
     }
     return models;
 }

@@ -904,8 +904,8 @@ void MainViewer::generateRules(){
     connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
 
     QLabel *modeChoice = new QLabel("Choose a mode :");
-    QRadioButton *modeFirstChoice = new QRadioButton("Mode 1");
-    QRadioButton *modeSecondChoice = new QRadioButton("Mode 2");
+    QRadioButton *modeFirstChoice = new QRadioButton("Voisinage Différents ");
+    QRadioButton *modeSecondChoice = new QRadioButton("Voisinage Equivalent");
 
     modeFirstChoice->setChecked(true);
 
@@ -918,13 +918,12 @@ void MainViewer::generateRules(){
     form.addWidget(buttonBox);
 
     if (dialog->exec() == QDialog::Accepted) {
-        int mode = 0;
         if (modeFirstChoice->isChecked()){
-            mode = 0;
+            m_mode = 0;
         }else if (modeSecondChoice->isChecked()){
-            mode = 1;
+            m_mode = 1;
         }
-        grid->setMode(mode);
+        grid->setMode(m_mode);
         m_modeles = grid->createRules();
         m_init_wfc->setEnabled(true);
 
@@ -933,8 +932,7 @@ void MainViewer::generateRules(){
     }
 }
 
-void MainViewer::initializeWFC(){
-
+void MainViewer::initializeWFC() {
     bool ok;
 
     QInputDialog *inputDialog = new QInputDialog(this);
@@ -958,30 +956,43 @@ void MainViewer::initializeWFC(){
             0.1, 1, 100, 2, &ok);
 
         if (ok) {
-            m_dimension = value1;
-            m_spacing = value2;
+            inputDialog->setLabelText(tr("Cellules à l'initialisation:"));
 
-            grid->clean();
-            grid = new Grid(m_dimension, m_dimension, m_dimension,
-                            m_spacing, m_spacing, m_spacing,
-                            QVector3D(m_spacing/2, m_spacing/2, m_spacing/2), m_modeles.size());
+            int valueK = inputDialog->getInt(
+                this,
+                tr("Valeur de k"),
+                tr("k :"),
+                5, 1, 100, 1, &ok);
 
-            grid->setModeles(m_modeles);
+            if (ok) {
+                m_dimension = value1;
+                m_spacing = value2;
 
-            Wfc wfc(*grid);
-            wfc.runWFC(5, m_modeles,grid->getMode());
+                grid->clean();
+                grid = new Grid(m_dimension, m_dimension, m_dimension,
+                                m_spacing, m_spacing, m_spacing,
+                                QVector3D(m_spacing / 2, m_spacing / 2, m_spacing / 2), m_modeles.size());
 
-            float boxSize = (float)value1 * value2;
-            setSceneCenter(qglviewer::Vec(boxSize / 2.0, boxSize / 2.0, boxSize / 2.0));
-            setSceneRadius(boxSize);
+                grid->setModeles(m_modeles);
 
-            init();
-            show();
+                Wfc wfc(*grid);
+                for (int i = 0; i < m_modeles.size(); i++) {
+                    m_modeles[i]->setType(m_modeles, m_mode);
+                }
+                wfc.runWFC(valueK, m_modeles, grid->getMode());
 
+                float boxSize = (float)value1 * value2;
+                setSceneCenter(qglviewer::Vec(boxSize / 2.0, boxSize / 2.0, boxSize / 2.0));
+                setSceneRadius(boxSize);
+
+                init();
+                show();
+            }
         }
     }
     delete inputDialog;
 }
+
 
 void MainViewer::clear(){
     if (grid){
