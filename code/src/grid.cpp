@@ -477,20 +477,36 @@ int getAxisSign(QVector3D vec){
 
 QVector3D Grid::approxAngle(QVector3D &angle) {
     float epsilon = 5.0f;
-    float tolerance = 0.1f;
-    if (fabs(angle.x() + 90.0f) < tolerance) angle.setX(270.0f);
-    if (fabs(angle.y() + 90.0f) < tolerance) angle.setY(270.0f);
-    if (fabs(angle.z() + 90.0f) < tolerance) angle.setZ(270.0f);
     for (int i = 0; i < 4; i++) {
-
-        if (angle.x() > (i * 90) - epsilon && angle.x() < (i * 90) + epsilon) {
-            angle.setX(i * 90);
+        if(angle.x()<0){
+            if (fabs(angle.x() + 90.0f) < epsilon) angle.setX(270.0f);
+            if (fabs(angle.x() + 180.0f) < epsilon) angle.setX(180.0f);
+            if (fabs(angle.x()) < epsilon) angle.setX(0.0f);
         }
-        if (angle.y() > (i * 90) - epsilon && angle.y() < (i * 90) + epsilon) {
-            angle.setY(i * 90);
+        else{
+            if (angle.x() > (i * 90) - epsilon && angle.x() < (i * 90) + epsilon) {
+                angle.setX(i * 90);
+            }
         }
-        if (angle.z() > (i * 90) - epsilon && angle.z() < (i * 90) + epsilon) {
-            angle.setZ(i * 90);
+        if(angle.y()<0){
+            if (fabs(angle.y() + 90.0f) < epsilon) angle.setY(270.0f);
+            if (fabs(angle.y() + 180.0f) < epsilon) angle.setY(180.0f);
+            if (fabs(angle.y()) < epsilon) angle.setY(0.0f);
+        }
+        else{
+            if (angle.y() > (i * 90) - epsilon && angle.y() < (i * 90) + epsilon) {
+                angle.setY(i * 90);
+            }
+        }
+        if(angle.z()<0){
+            if (fabs(angle.z() + 90.0f) < epsilon) angle.setZ(270.0f);
+            if (fabs(angle.z() + 180.0f) < epsilon) angle.setZ(180.0f);
+            if (fabs(angle.z()) < epsilon) angle.setZ(0.0f);
+        }
+        else{
+            if (angle.z() > (i * 90) - epsilon && angle.z() < (i * 90) + epsilon) {
+                angle.setZ(i * 90);
+            }
         }
     }
     return angle;
@@ -518,6 +534,7 @@ QVector<TileModel*> Grid::createRules(){//Créer les règles a partir d'une gril
                     //Récupération rotation
                     Transform transform =getCell(x,y,z).object.transform();
                     QVector3D angles = transform.getRotationAngles();
+                    qDebug()<<angles;
                     angles=approxAngle(angles);
                     int indexX=std::abs(angles[0]/90.0f);
                     int indexY=std::abs(angles[1]/90.0f);
