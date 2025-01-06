@@ -676,3 +676,80 @@ void Grid::drawGridLines(QOpenGLShaderProgram* program) {
     lineVBO.release();
     program->release();
 }
+
+void ajouterVoisinage(const QVector3D& centre, QVector<QVector3D>& voisins, int maxX, int maxY, int maxZ,int size) {
+    for (int dx = -size; dx <= size; ++dx) {
+        for (int dy = -size; dy <= size; ++dy) {
+            for (int dz = -size; dz <= size; ++dz) {
+                QVector3D voisin(
+                    std::clamp(centre.x() + dx, 0.0f, float(maxX - 1)),
+                    std::clamp(centre.y() + dy, 0.0f, float(maxY - 1)),
+                    std::clamp(centre.z() + dz, 0.0f, float(maxZ - 1))
+                    );
+                if (voisin != centre) {
+                    if (!contains(voisins, voisin)) {
+                        voisins.push_back(voisin);
+                    }
+                }
+            }
+        }
+    }
+}
+
+int calcSize(int count){
+    if(count<5) return 1;
+    else if(count<10) return 2;
+    else return 3;
+}
+
+void Grid::resetLocalZone(QVector3D pos, QVector<QVector3D>& voisins, QVector<QVector3D>& cellsDone, int maxX, int maxY, int maxZ, int count) {
+    int size = calcSize(count);
+
+    // Générer la zone principale (cube de taille `size`)
+    ajouterVoisinage(pos, voisins, maxX, maxY, maxZ, size);
+
+    // Générer toutes les cellules affectées (cube de taille `size + 1`)
+    QVector<QVector3D> toutesCellulesAffectees;
+    ajouterVoisinage(pos, toutesCellulesAffectees, maxX, maxY, maxZ, size + 1);
+
+    // Réinitialiser les cellules dans la zone principale
+    for (const auto& cellule : voisins) {
+        deleteInstance(cellule.x(), cellule.y(), cellule.z());
+
+        // Retirer la cellule de 'cellsDone' si elle existe
+        cellsDone.removeOne(cellule);
+    }
+
+    // Mettre à jour l'entropie pour toutes les cellules affectées
+    for (const auto& cellule : toutesCellulesAffectees) {
+        QVector<QVector3D> voisinsN;
+
+        // Utiliser des cast explicites pour éviter les problèmes de types avec std::min
+        int x = static_cast<int>(cellule.x());
+        int y = static_cast<int>(cellule.y());
+        int z = static_cast<int>(cellule.z());
+
+        // Ajouter les voisins valides de la cellule avec des casts explicites
+        if (getCell(std::min(x + 1, maxX - 1), y, z).hasMesh)
+            voisinsN.push_back(QVector3D(std::min(x + 1, maxX - 1), y, z));
+
+        if (!contains(voisinsN, QVector3D(std::max(x - 1, 0), y, z)))
+            voisinsN.push_back(QVector3D(std::max(x - 1, 0), y, z));
+        if (!contains(voisinsN, QVector3D(x, std::min(y + 1, maxY - 1), z)))
+            voisinsN.push_back(QVector3D(x, std::min(y + 1, maxY - 1), z));
+        if (!contains(voisinsN, QVector3D(x, std::max(y - 1, 0), z)))
+            voisinsN.push_back(QVector3D(x, std::max(y - 1, 0), z));
+        if (!contains(voisinsN, QVector3D(x, y, std::min(z + 1, maxZ - 1))))
+            voisinsN.push_back(QVector3D(x, y, std::min(z + 1, maxZ - 1)));
+        if (!contains(voisinsN, QVector3D(x, y, std::max(z - 1, 0))))
+            voisinsN.push_back(QVector3D(x, y, std::max(z - 1, 0)));
+
+        removeElementFromVec(voisinsN, cellule);
+
+        // Mettre à jour l'entropie de la cellule
+        getCell(cellule.x(), cellule.y(), cellule.z()).entropy = voisinsN.size();
+    }
+}
+
+
+

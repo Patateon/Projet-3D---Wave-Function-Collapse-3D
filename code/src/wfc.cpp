@@ -334,6 +334,39 @@ void Wfc::initWFC(int k, QVector<TileModel*> &modeles, int mode) {
     m_grid.printGrid();
 }
 
+struct QVector3DLess {
+    bool operator()(const QVector3D& a, const QVector3D& b) const {
+        if (a.x() != b.x()) return a.x() < b.x();
+        if (a.y() != b.y()) return a.y() < b.y();
+        return a.z() < b.z();
+    }
+};
+
+QVector<QVector3D> getBestEntropyCells(Grid& grid) {
+    int maxEntropy = -1;
+    QVector<QVector3D> bestEntropy;
+
+    // Parcours de la grille pour trouver l'entropie maximale et les cellules correspondantes
+    for (int x = 0; x < grid.getX(); x++) {
+        for (int y = 0; y < grid.getY(); y++) {
+            for (int z = 0; z < grid.getZ(); z++) {
+                const Cell& cell = grid.getCell(x, y, z); // Récupère la cellule
+                if (cell.entropy > maxEntropy && !cell.hasMesh) {
+                    maxEntropy = cell.entropy; // Mise à jour de l'entropie maximale
+                    bestEntropy.clear(); // Réinitialiser la liste des meilleures cellules
+                    bestEntropy.push_back(QVector3D(x, y, z)); // Ajouter la cellule avec la nouvelle entropie maximale
+                } else if (cell.entropy == maxEntropy && !cell.hasMesh) {
+                    bestEntropy.push_back(QVector3D(x, y, z)); // Ajouter la cellule si elle a la même entropie maximale
+                }
+            }
+        }
+    }
+
+    return bestEntropy;
+}
+
+
+
 void Wfc::runWFC(int k, QVector<TileModel*> &modeles, int mode) {
     for (int i = 0; i < 30; i++) {
         initWFC(k, modeles, mode);
@@ -358,44 +391,26 @@ void Wfc::runWFC(int k, QVector<TileModel*> &modeles, int mode) {
                 }
             }
         }
-        std::cout<<"cellules apres ini"<<c<<std::endl;
         //Variable de limite d'itération de tentative de remplissage de grille
         int iterationLimit = m_grid.getX() * m_grid.getY() * m_grid.getZ() * 3;
         int iterationCount = 0;
         bool isEnd = false;
-
+        int localResetCount = 0;
+        std::map<QVector3D, int, QVector3DLess> zoneResetCount;;
         while (!isFull && !isEnd) {
             iterationCount++;
             if (iterationCount > iterationLimit) {
                 isEnd = true;
             }
 
-            int maxEntropy = -1;
-            QVector<QVector3D> bestEntropy;
-            //Récupération de la meilleure entropie
-            for (int x = 0; x < m_grid.getX(); x++) {
-                for (int y = 0; y < m_grid.getY(); y++) {
-                    for (int z = 0; z < m_grid.getZ(); z++) {
-                        if (m_grid.getCell(x, y, z).entropy > maxEntropy && !m_grid.getCell(x, y, z).hasMesh) {
-                            maxEntropy = m_grid.getCell(x, y, z).entropy;
-                        }
-                    }
-                }
-            }
-            //Récupération des cellules ayant la meilleure entropie
-            for (int x = 0; x < m_grid.getX(); x++) {
-                for (int y = 0; y < m_grid.getY(); y++) {
-                    for (int z = 0; z < m_grid.getZ(); z++) {
-                        if (m_grid.getCell(x, y, z).entropy == maxEntropy && !m_grid.getCell(x, y, z).hasMesh) {
-                            bestEntropy.push_back(QVector3D(x, y, z));
-                        }
-                    }
-                }
-            }
+            QVector<QVector3D> bestEntropy = getBestEntropyCells(m_grid);
 
             bool isSet = false;
             //Boucle de choix de position
             while (!isSet && !bestEntropy.isEmpty()) {
+                if (bestEntropy.isEmpty()) {
+                    break; // Sortir de la boucle si bestEntropy est vide
+                }
                 //Récupération au hasard parmi les cellules ayant la meilleure entropie
                 std::uniform_int_distribution<> disEntropy(0, bestEntropy.size() - 1);
                 int randomPossibility = disEntropy(gen);
@@ -448,7 +463,34 @@ void Wfc::runWFC(int k, QVector<TileModel*> &modeles, int mode) {
                 }
 
                 if (possibleModeles.isEmpty()) {
+                    //reset local
+                    //recalculer entropie des membres du voisinage cellule et autour
                     isSet = false;
+                    localResetCount++;
+                    if(localResetCount<100){
+                        voisins.push_back(pos);
+                        //Recherche si un des voisins a déja était reset
+                        bool found=false;
+                        QVector3D cellToReset;
+                        for(int i = 0;i<voisins.size();i++){
+                            QVector3D keyToCheck=voisins[i];
+                            auto it = zoneResetCount.find(keyToCheck);
+                            if (it != zoneResetCount.end()) {
+                                // Clé trouvée, afficher la valeur
+                                found=true;
+                                cellToReset=keyToCheck;
+                            }
+                        }
+                        if(found==false){
+                            cellToReset=pos;
+                        }
+                        zoneResetCount[cellToReset]++;
+                        m_grid.resetLocalZone(cellToReset,voisins,cellsDone,m_grid.getX(),m_grid.getY(),m_grid.getZ(),zoneResetCount[cellToReset]);
+                        c-=voisins.size();
+                        //retirer les cellules de cellsDOne
+                    }
+
+
                 } else {
                     //Si il y a des modeles possibles on tire parmi ces modeles
                     QList<int> list = possibleModeles.toList();
@@ -526,13 +568,11 @@ void Wfc::runWFC(int k, QVector<TileModel*> &modeles, int mode) {
             }
 
             if (c >= m_grid.getX() * m_grid.getY() * m_grid.getZ()) {
-                std::cout << "Fin de programme normale" << std::endl;
                 isFull = true;
             }
         }
         //Condition de fin
         if (isFull) {
-            std::cout << "Fin apres " << i << " iterations" << std::endl;
             break;
         } else {
             m_grid.clean();

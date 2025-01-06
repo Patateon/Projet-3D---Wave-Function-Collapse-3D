@@ -71,7 +71,8 @@ public:
     void setMode(int mode);
     void initGridLines(QOpenGLShaderProgram* program);
     void drawGridLines(QOpenGLShaderProgram* program);
-  
+
+    void resetLocalZone(QVector3D pos,QVector<QVector3D>& voisins,QVector<QVector3D>& cellsDone,int maxX, int maxY, int maxZ,int count);
 private:
     QVector3D BBmin;
     QVector3D BBmax;
