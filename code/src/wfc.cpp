@@ -110,6 +110,9 @@ QVector3D approxAngle(QVector3D &angle) {
     return angle;
 }
 
+//Pour ini et run, potentiel de retirer la vérification de regle dans les 2 sens et seulement se contenter du sens regle voisins
+//, récupération de l'intersection car avec la lecture de grille les regles seront cohérentes, i.e , si a peut etre voisin de b , b peut etre voisin de a, automatiquement.
+//La verification dans les2 sens était utile lorsque l'on settait les regles a la main a hasard
 void Wfc::initWFC(int k, QVector<TileModel*> &modeles, int mode) {
     std::random_device rd;
     std::mt19937 gen(rd());
