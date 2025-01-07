@@ -124,8 +124,6 @@ void Wfc::initWFC(int k, QVector<TileModel*> &modeles, int mode) {
     QVector<QSet<int>*> rules;
     bool objectSet = false;
     QVector<QVector3D> voisins;
-    int id;
-    bool ruleBroken = false;
     QVector<QVector3D> cellsDone;
     //Nombre d'itération limite pour avoir une grille pleine
     for (int i = 0; i < k; i++) {
@@ -358,11 +356,15 @@ QVector<QVector3D> getBestEntropyCells(Grid& grid) {
 
 
 void Wfc::runWFC(int k, QVector<TileModel*> &modeles, int mode) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> disX(0, m_grid.getX() - 1);
+    std::uniform_int_distribution<> disY(0, m_grid.getY() - 1);
+    std::uniform_int_distribution<> disZ(0, m_grid.getZ() - 1);
     for (int i = 0; i < 30; i++) {
         initWFC(k, modeles, mode);
         bool isFull = false;
-        std::random_device rd;
-        std::mt19937 gen(rd());
+
 
         std::cout << "Debut de run" << std::endl;
         QVector<QVector3D> cellsDone;
@@ -404,16 +406,21 @@ void Wfc::runWFC(int k, QVector<TileModel*> &modeles, int mode) {
                 //Récupération au hasard parmi les cellules ayant la meilleure entropie
                 std::uniform_int_distribution<> disEntropy(0, bestEntropy.size() - 1);
                 int randomPossibility = disEntropy(gen);
-
-                QVector3D pos = cellsDone[0];
+                QVector3D pos;
                 int randomX, randomY, randomZ;
-                while (cellsDone.contains(pos)) {
-                    randomX = bestEntropy[randomPossibility].x();
-                    randomY = bestEntropy[randomPossibility].y();
-                    randomZ = bestEntropy[randomPossibility].z();
-                    pos = QVector3D(randomX, randomY, randomZ);
+                if (cellsDone.isEmpty()) {
+                    randomX = disX(gen);
+                    randomY = disY(gen);
+                    randomZ = disZ(gen);
+                } else {
+                    pos = cellsDone[0];
+                    while (cellsDone.contains(pos)) {
+                        randomX = bestEntropy[randomPossibility].x();
+                        randomY = bestEntropy[randomPossibility].y();
+                        randomZ = bestEntropy[randomPossibility].z();
+                        pos = QVector3D(randomX, randomY, randomZ);
+                    }
                 }
-
                 bestEntropy.removeAt(randomPossibility);
                 //Récupération voisins
                 QVector<QVector3D> voisins;
@@ -430,68 +437,100 @@ void Wfc::runWFC(int k, QVector<TileModel*> &modeles, int mode) {
                     voisins.push_back(QVector3D(randomX, randomY, std::max(randomZ - 1, 0)));
                 removeElementFromVector(voisins, QVector3D(randomX, randomY, randomZ));
                 //Récupération des règles des voisins
-                QVector<QSet<int>> ruleSets;
-                for (int j = 0; j < voisins.size(); j++) {
-                    if (m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).hasMesh) {
-                        if (mode == 0) {
-                            QSet<int> set = getCorrespondingRules(QVector3D(randomX, randomY, randomZ), voisins[j],
-                                                                  m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).object.tileModel());
-                            ruleSets.push_back(set);
-                        } else {
-                            ruleSets.push_back(m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).object.tileModel()->getXMinus());
+                if(voisins.isEmpty()){
+                    std::uniform_int_distribution<> disModele(0, modeles.size()-1);
+                    std::cout<<modeles.size()<<std::endl;
+
+                    int randomModel = disModele(gen);
+                    std::cout<<randomModel<<std::endl;
+                    Transform transform;
+                    TileModel model = *modeles[randomModel];
+                    TileInstance instance(new TileModel(model), transform);
+                    float x_deg, y_deg, z_deg = 0;
+                    QVector<bool> x_rot = model.getXRot();
+                    QVector<bool> y_rot = model.getYRot();
+                    QVector<bool> z_rot = model.getZRot();
+                    QVector<int> x_possible_rot;
+                    QVector<int> y_possible_rot;
+                    QVector<int> z_possible_rot;
+                    std::cout<<x_rot.size()<<std::endl;
+                    for (int j = 0; j < 4; j++) {
+                        if (x_rot[j] == 1) {
+                            x_possible_rot.push_back(j * 90);
+                        }
+                        if (y_rot[j] == 1) {
+                            y_possible_rot.push_back(j * 90);
+                        }
+                        if (z_rot[j] == 1) {
+                            z_possible_rot.push_back(j * 90);
                         }
                     }
-                }
+                    std::cout<<x_possible_rot.size()<<std::endl;
 
-                QSet<int> possibleModeles;
-                //Intersection des regles pour avoir la liste des modeles possibles pour la cellule choisie
-                if (!ruleSets.isEmpty()) {
-                    possibleModeles = ruleSets[0];
-                    for (int i = 1; i < ruleSets.size(); ++i) {
-                        possibleModeles = possibleModeles.intersect(ruleSets[i]);
-                    }
+                    std::uniform_int_distribution<> disRotX(0, x_possible_rot.size() - 1);
+                    std::uniform_int_distribution<> disRotY(0, y_possible_rot.size() - 1);
+                    std::uniform_int_distribution<> disRotZ(0, z_possible_rot.size() - 1);
+                    x_deg = x_possible_rot[disRotX(gen)];
+                    y_deg = y_possible_rot[disRotY(gen)];
+                    z_deg = z_possible_rot[disRotZ(gen)];
+                    m_grid.setObject(instance, randomX, randomY, randomZ, x_deg, y_deg, z_deg);
+                    cellsDone.push_back(pos);
+                    c++;
                 }
-
-                if (possibleModeles.isEmpty()) {
-                    //reset local
-                    //recalculer entropie des membres du voisinage cellule et autour
-                    isSet = false;
-                    localResetCount++;
-                    if(localResetCount<100){
-                        voisins.push_back(pos);
-                        //Recherche si un des voisins a déja était reset
-                        bool found=false;
-                        QVector3D cellToReset;
-                        for(int i = 0;i<voisins.size();i++){
-                            QVector3D keyToCheck=voisins[i];
-                            auto it = zoneResetCount.find(keyToCheck);
-                            if (it != zoneResetCount.end()) {
-                                // Clé trouvée, afficher la valeur
-                                found=true;
-                                cellToReset=keyToCheck;
+                else{
+                    QVector<QSet<int>> ruleSets;
+                    for (int j = 0; j < voisins.size(); j++) {
+                        if (m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).hasMesh) {
+                            if (mode == 0) {
+                                QSet<int> set = getCorrespondingRules(QVector3D(randomX, randomY, randomZ), voisins[j],
+                                                                      m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).object.tileModel());
+                                ruleSets.push_back(set);
+                            } else {
+                                ruleSets.push_back(m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).object.tileModel()->getXMinus());
                             }
                         }
-                        if(found==false){
-                            cellToReset=pos;
-                        }
-                        zoneResetCount[cellToReset]++;
-                        m_grid.resetLocalZone(cellToReset,voisins,cellsDone,m_grid.getX(),m_grid.getY(),m_grid.getZ(),zoneResetCount[cellToReset]);
-                        c-=voisins.size();
-                        //retirer les cellules de cellsDOne
                     }
-
-
-                } else {
-                    //Si il y a des modeles possibles on tire parmi ces modeles
-                    QList<int> list = possibleModeles.toList();
-                    std::sort(list.begin(), list.end());
-                    std::uniform_int_distribution<> disModele(0, list.size() - 1);
-                    int randomModel = disModele(gen);
-
-                    bool ruleBroken = false;
-                    int id;
-
-                    //Si aucune règle n'est enfreinte on prépare les rotations
+                    QSet<int> possibleModeles;
+                    //Intersection des regles pour avoir la liste des modeles possibles pour la cellule choisie
+                    if (!ruleSets.isEmpty()) {
+                        possibleModeles = ruleSets[0];
+                        for (int i = 1; i < ruleSets.size(); ++i) {
+                            possibleModeles = possibleModeles.intersect(ruleSets[i]);
+                        }
+                    }
+                    if (possibleModeles.isEmpty()) {
+                        //reset local
+                        //recalculer entropie des membres du voisinage cellule et autour
+                        isSet = false;
+                        localResetCount++;
+                        if(localResetCount<100){
+                            voisins.push_back(pos);
+                            //Recherche si un des voisins a déja était reset
+                            bool found=false;
+                            QVector3D cellToReset;
+                            for(int j = 0;j<voisins.size();j++){
+                                QVector3D keyToCheck=voisins[j];
+                                auto it = zoneResetCount.find(keyToCheck);
+                                if (it != zoneResetCount.end()) {
+                                    // Clé trouvée, afficher la valeur
+                                    found=true;
+                                    cellToReset=keyToCheck;
+                                }
+                            }
+                            if(found==false){
+                                cellToReset=pos;
+                            }
+                            zoneResetCount[cellToReset]++;
+                            m_grid.resetLocalZone(cellToReset,voisins,cellsDone,m_grid.getX(),m_grid.getY(),m_grid.getZ(),zoneResetCount[cellToReset]);
+                            c-=voisins.size();
+                            //retirer les cellules de cellsDOne
+                        }
+                    } else {
+                        //Si il y a des modeles possibles on tire parmi ces modeles
+                        QList<int> list = possibleModeles.toList();
+                        std::sort(list.begin(), list.end());
+                        std::uniform_int_distribution<> disModele(0, list.size() - 1);
+                        int randomModel = disModele(gen);
 
                         Transform transform;
                         TileModel model = *modeles[list[randomModel]];
@@ -546,6 +585,8 @@ void Wfc::runWFC(int k, QVector<TileModel*> &modeles, int mode) {
                         c++;
                     }
 
+                }
+
             }
 
             if (c >= m_grid.getX() * m_grid.getY() * m_grid.getZ()) {
@@ -554,6 +595,7 @@ void Wfc::runWFC(int k, QVector<TileModel*> &modeles, int mode) {
         }
         //Condition de fin
         if (isFull) {
+            std::cout<<"Fin à "<<i<<"itérations"<<std::endl;
             break;
         } else {
             m_grid.clean();
