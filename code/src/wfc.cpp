@@ -251,19 +251,9 @@ void Wfc::initWFC(int k, QVector<TileModel*> &modeles, int mode) {
                         }
                     } else {
                         //Vérification des règles dans l'autre sens, i.e , voisinage correct pour le modele choisi à la position choisie
-                            ruleBroken = false;
-                            for (int j = 0; j < voisins.size(); j++) {
-                                if (m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).hasMesh) {
-                                    id = m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).object.tileModel()->id();
-                                    QSet set = getCorrespondingRules(voisins[j], QVector3D(randomX, randomY, randomZ), modeles[randomModel]);
-                                    if (!set.contains(id)) {
-                                        ruleBroken = true;
-                                        break;
-                                    }
-                                }
-                            }
+
                             //Si pas de probleme au niveaux des regles on prépare la rotation
-                            if (!ruleBroken) {
+
                                 objectSet = true;
                                 endModelChoice = true;
                                 TileModel model = *modeles[randomModel];
@@ -317,7 +307,7 @@ void Wfc::initWFC(int k, QVector<TileModel*> &modeles, int mode) {
                                 for (int j = 0; j < voisins.size(); j++) {
                                     m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).entropy++;
                                 }
-                            }
+
 
                     }
                 }
@@ -500,18 +490,9 @@ void Wfc::runWFC(int k, QVector<TileModel*> &modeles, int mode) {
 
                     bool ruleBroken = false;
                     int id;
-                    //On vérifie les règles dans l'autre sens
-                    for (int j = 0; j < voisins.size(); j++) {
-                        if (m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).hasMesh) {
-                            id = m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).object.tileModel()->id();
-                            if (!(getCorrespondingRules(voisins[j], QVector3D(randomX, randomY, randomZ), modeles[list[randomModel]]).contains(id))) {
-                                ruleBroken = true;
-                                break;
-                            }
-                        }
-                    }
+
                     //Si aucune règle n'est enfreinte on prépare les rotations
-                    if (!ruleBroken) {
+
                         Transform transform;
                         TileModel model = *modeles[list[randomModel]];
                         TileInstance instance(new TileModel(model), transform);
@@ -564,7 +545,7 @@ void Wfc::runWFC(int k, QVector<TileModel*> &modeles, int mode) {
                         }
                         c++;
                     }
-                }
+
             }
 
             if (c >= m_grid.getX() * m_grid.getY() * m_grid.getZ()) {
