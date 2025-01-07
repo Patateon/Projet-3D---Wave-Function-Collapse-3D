@@ -421,105 +421,148 @@ void Wfc::runWFC(int k, QVector<TileModel*> &modeles, int mode) {
                 if (!contains(voisins, QVector3D(randomX, randomY, std::max(randomZ - 1, 0))))
                     voisins.push_back(QVector3D(randomX, randomY, std::max(randomZ - 1, 0)));
                 removeElementFromVector(voisins, QVector3D(randomX, randomY, randomZ));
-                //Récupération des règles des voisins
-                QVector<QSet<int>> ruleSets;
-                for (int j = 0; j < voisins.size(); j++) {
-                    if (m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).hasMesh) {
-                        if (mode == 0) {
-                            QSet<int> set = getCorrespondingRules(QVector3D(randomX, randomY, randomZ), voisins[j],
-                                                                  m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).object.tileModel());
-                            ruleSets.push_back(set);
-                        } else {
-                            ruleSets.push_back(m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).object.tileModel()->getXMinus());
+                if(voisins.isEmpty()){
+                    std::uniform_int_distribution<> disModele(0, modeles.size()-1);
+                    std::cout<<modeles.size()<<std::endl;
+
+                    int randomModel = disModele(gen);
+                    std::cout<<randomModel<<std::endl;
+                    Transform transform;
+                    TileModel model = *modeles[randomModel];
+                    TileInstance instance(new TileModel(model), transform);
+                    float x_deg, y_deg, z_deg = 0;
+                    QVector<bool> x_rot = model.getXRot();
+                    QVector<bool> y_rot = model.getYRot();
+                    QVector<bool> z_rot = model.getZRot();
+                    QVector<int> x_possible_rot;
+                    QVector<int> y_possible_rot;
+                    QVector<int> z_possible_rot;
+                    std::cout<<x_rot.size()<<std::endl;
+                    for (int j = 0; j < 4; j++) {
+                        if (x_rot[j] == 1) {
+                            x_possible_rot.push_back(j * 90);
+                        }
+                        if (y_rot[j] == 1) {
+                            y_possible_rot.push_back(j * 90);
+                        }
+                        if (z_rot[j] == 1) {
+                            z_possible_rot.push_back(j * 90);
                         }
                     }
+                    std::cout<<x_possible_rot.size()<<std::endl;
+
+                    std::uniform_int_distribution<> disRotX(0, x_possible_rot.size() - 1);
+                    std::uniform_int_distribution<> disRotY(0, y_possible_rot.size() - 1);
+                    std::uniform_int_distribution<> disRotZ(0, z_possible_rot.size() - 1);
+                    x_deg = x_possible_rot[disRotX(gen)];
+                    y_deg = y_possible_rot[disRotY(gen)];
+                    z_deg = z_possible_rot[disRotZ(gen)];
+                    m_grid.setObject(instance, randomX, randomY, randomZ, x_deg, y_deg, z_deg);
+                    cellsDone.push_back(pos);
+                    c++;
                 }
-
-                QSet<int> possibleModeles;
-                //Intersection des regles pour avoir la liste des modeles possibles pour la cellule choisie
-                if (!ruleSets.isEmpty()) {
-                    possibleModeles = ruleSets[0];
-                    for (int i = 1; i < ruleSets.size(); ++i) {
-                        possibleModeles = possibleModeles.intersect(ruleSets[i]);
-                    }
-                }
-
-                if (possibleModeles.isEmpty()) {
-                    isSet = false;
-                } else {
-                    //Si il y a des modeles possibles on tire parmi ces modeles
-                    QList<int> list = possibleModeles.toList();
-                    std::sort(list.begin(), list.end());
-                    std::uniform_int_distribution<> disModele(0, list.size() - 1);
-                    int randomModel = disModele(gen);
-
-                    bool ruleBroken = false;
-                    int id;
-                    //On vérifie les règles dans l'autre sens
+                else{
+                    //Récupération des règles des voisins
+                    QVector<QSet<int>> ruleSets;
                     for (int j = 0; j < voisins.size(); j++) {
                         if (m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).hasMesh) {
-                            id = m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).object.tileModel()->id();
-                            if (!(getCorrespondingRules(voisins[j], QVector3D(randomX, randomY, randomZ), modeles[list[randomModel]]).contains(id))) {
-                                ruleBroken = true;
-                                break;
+                            if (mode == 0) {
+                                QSet<int> set = getCorrespondingRules(QVector3D(randomX, randomY, randomZ), voisins[j],
+                                                                      m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).object.tileModel());
+                                ruleSets.push_back(set);
+                            } else {
+                                ruleSets.push_back(m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).object.tileModel()->getXMinus());
                             }
                         }
                     }
-                    //Si aucune règle n'est enfreinte on prépare les rotations
-                    if (!ruleBroken) {
-                        Transform transform;
-                        TileModel model = *modeles[list[randomModel]];
-                        TileInstance instance(new TileModel(model), transform);
-                        //Récupération rotation prioritaire dans voisinage
-                        float x_deg, y_deg, z_deg = 0;
-                        int posPrio = findVectorPrio(voisins, cellsDone);
-                        Transform transformCopy = m_grid.getCell(cellsDone[posPrio].x(), cellsDone[posPrio].y(), cellsDone[posPrio].z()).object.transform();
-                        QVector3D angles = transformCopy.getRotationAngles();
-                        angles=approxAngle(angles);
-                        int indexX = std::abs(angles[0] / 90.0f);
-                        int indexY = std::abs(angles[1] / 90.0f);
-                        int indexZ = std::abs(angles[2] / 90.0f);
-                        //Si rotation prioritaire autorisée on la copie sinon au hasard parmi les possibilités du modele choisi
-                        if (model.getXRot()[indexX] == 1 && model.getYRot()[indexY] == 1 && model.getZRot()[indexZ] == 1) {
-                            m_grid.getCell(cellsDone[posPrio].x(), cellsDone[posPrio].y(), cellsDone[posPrio].z()).object.transform().rotation().getEulerAngles(&x_deg, &y_deg, &z_deg);
-                        } else {
-                            QVector<bool> x_rot = model.getXRot();
-                            QVector<bool> y_rot = model.getYRot();
-                            QVector<bool> z_rot = model.getZRot();
-                            QVector<int> x_possible_rot;
-                            QVector<int> y_possible_rot;
-                            QVector<int> z_possible_rot;
 
-                            for (int j = 0; j < 4; j++) {
-                                if (x_rot[j] == 1) {
-                                    x_possible_rot.push_back(j * 90);
-                                }
-                                if (y_rot[j] == 1) {
-                                    y_possible_rot.push_back(j * 90);
-                                }
-                                if (z_rot[j] == 1) {
-                                    z_possible_rot.push_back(j * 90);
+                    QSet<int> possibleModeles;
+                    //Intersection des regles pour avoir la liste des modeles possibles pour la cellule choisie
+                    if (!ruleSets.isEmpty()) {
+                        possibleModeles = ruleSets[0];
+                        for (int j = 1; j < ruleSets.size(); ++j) {
+                            possibleModeles = possibleModeles.intersect(ruleSets[j]);
+                        }
+                    }
+
+                    if (possibleModeles.isEmpty()) {
+                        isSet = false;
+                    } else {
+                        //Si il y a des modeles possibles on tire parmi ces modeles
+                        QList<int> list = possibleModeles.toList();
+                        std::sort(list.begin(), list.end());
+                        std::uniform_int_distribution<> disModele(0, list.size() - 1);
+                        int randomModel = disModele(gen);
+
+                        bool ruleBroken = false;
+                        int id;
+                        //On vérifie les règles dans l'autre sens
+                        for (int j = 0; j < voisins.size(); j++) {
+                            if (m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).hasMesh) {
+                                id = m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).object.tileModel()->id();
+                                if (!(getCorrespondingRules(voisins[j], QVector3D(randomX, randomY, randomZ), modeles[list[randomModel]]).contains(id))) {
+                                    ruleBroken = true;
+                                    break;
                                 }
                             }
-
-                            std::uniform_int_distribution<> disRotX(0, x_possible_rot.size() - 1);
-                            std::uniform_int_distribution<> disRotY(0, y_possible_rot.size() - 1);
-                            std::uniform_int_distribution<> disRotZ(0, z_possible_rot.size() - 1);
-                            x_deg = x_possible_rot[disRotX(gen)];
-                            y_deg = y_possible_rot[disRotY(gen)];
-                            z_deg = z_possible_rot[disRotZ(gen)];
                         }
-                        //On set l'objet
-                        m_grid.setObject(instance, randomX, randomY, randomZ, x_deg, y_deg, z_deg);
-                        cellsDone.push_back(pos);
+                        //Si aucune règle n'est enfreinte on prépare les rotations
+                        if (!ruleBroken) {
+                            Transform transform;
+                            TileModel model = *modeles[list[randomModel]];
+                            TileInstance instance(new TileModel(model), transform);
+                            //Récupération rotation prioritaire dans voisinage
+                            float x_deg, y_deg, z_deg = 0;
+                            int posPrio = findVectorPrio(voisins, cellsDone);
+                            Transform transformCopy = m_grid.getCell(cellsDone[posPrio].x(), cellsDone[posPrio].y(), cellsDone[posPrio].z()).object.transform();
+                            QVector3D angles = transformCopy.getRotationAngles();
+                            angles=approxAngle(angles);
+                            int indexX = std::abs(angles[0] / 90.0f);
+                            int indexY = std::abs(angles[1] / 90.0f);
+                            int indexZ = std::abs(angles[2] / 90.0f);
+                            //Si rotation prioritaire autorisée on la copie sinon au hasard parmi les possibilités du modele choisi
+                            if (model.getXRot()[indexX] == 1 && model.getYRot()[indexY] == 1 && model.getZRot()[indexZ] == 1) {
+                                m_grid.getCell(cellsDone[posPrio].x(), cellsDone[posPrio].y(), cellsDone[posPrio].z()).object.transform().rotation().getEulerAngles(&x_deg, &y_deg, &z_deg);
+                            } else {
+                                QVector<bool> x_rot = model.getXRot();
+                                QVector<bool> y_rot = model.getYRot();
+                                QVector<bool> z_rot = model.getZRot();
+                                QVector<int> x_possible_rot;
+                                QVector<int> y_possible_rot;
+                                QVector<int> z_possible_rot;
 
-                        isSet = true;
-                        for (int j = 0; j < voisins.size(); j++) {
-                            m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).entropy++;
+                                for (int j = 0; j < 4; j++) {
+                                    if (x_rot[j] == 1) {
+                                        x_possible_rot.push_back(j * 90);
+                                    }
+                                    if (y_rot[j] == 1) {
+                                        y_possible_rot.push_back(j * 90);
+                                    }
+                                    if (z_rot[j] == 1) {
+                                        z_possible_rot.push_back(j * 90);
+                                    }
+                                }
+
+                                std::uniform_int_distribution<> disRotX(0, x_possible_rot.size() - 1);
+                                std::uniform_int_distribution<> disRotY(0, y_possible_rot.size() - 1);
+                                std::uniform_int_distribution<> disRotZ(0, z_possible_rot.size() - 1);
+                                x_deg = x_possible_rot[disRotX(gen)];
+                                y_deg = y_possible_rot[disRotY(gen)];
+                                z_deg = z_possible_rot[disRotZ(gen)];
+                            }
+                            //On set l'objet
+                            m_grid.setObject(instance, randomX, randomY, randomZ, x_deg, y_deg, z_deg);
+                            cellsDone.push_back(pos);
+
+                            isSet = true;
+                            for (int j = 0; j < voisins.size(); j++) {
+                                m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).entropy++;
+                            }
+                            c++;
                         }
-                        c++;
                     }
                 }
+
             }
 
             if (c >= m_grid.getX() * m_grid.getY() * m_grid.getZ()) {
