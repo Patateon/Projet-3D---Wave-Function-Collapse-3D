@@ -248,73 +248,61 @@ void Wfc::initWFC(int k, QVector<TileModel*> &modeles, int mode) {
                         }
                     } else {
                         //Vérification des règles dans l'autre sens, i.e , voisinage correct pour le modele choisi à la position choisie
-                            ruleBroken = false;
+
+                            objectSet = true;
+                            endModelChoice = true;
+                            TileModel model = *modeles[randomModel];
+                            Transform transform;
+                            TileInstance instance(new TileModel(model), transform);
+                            //On recherche le voisin prioritaire pour copier la rotation
+                            float x_deg, y_deg, z_deg = 0;
+                            int posPrio = findVectorPrio(voisins, cellsDone);
+                            Transform transformCopy = m_grid.getCell(
+                                                                cellsDone[posPrio].x(),
+                                                                cellsDone[posPrio].y(),
+                                                                cellsDone[posPrio].z()).object.transform();
+                            QVector3D angles = transformCopy.getRotationAngles();
+                            angles=approxAngle(angles);
+                            int indexX = std::abs(angles[0] / 90.0f);
+                            int indexY = std::abs(angles[1] / 90.0f);
+                            int indexZ = std::abs(angles[2] / 90.0f);
+                            //Si la rotation du voisins prioritaire est possible pour le modele choisi on la copie
+                            if (model.getXRot()[indexX] == 1 && model.getYRot()[indexY] == 1 && model.getZRot()[indexZ] == 1) {
+                                m_grid.getCell(
+                                          cellsDone[posPrio].x(),
+                                          cellsDone[posPrio].y(),
+                                          cellsDone[posPrio].z()).object.transform().rotation().getEulerAngles(&x_deg, &y_deg, &z_deg);
+                            //Sinon prise au hasard
+                            } else {
+                                QVector<bool> x_rot = model.getXRot();
+                                QVector<bool> y_rot = model.getYRot();
+                                QVector<bool> z_rot = model.getZRot();
+
+                                QVector<int> x_possible_rot;
+                                QVector<int> y_possible_rot;
+                                QVector<int> z_possible_rot;
+
+                                for (int j = 0; j < 4; j++) {
+                                    if (x_rot[j] == 1) x_possible_rot.push_back(j * 90);
+                                    if (y_rot[j] == 1) y_possible_rot.push_back(j * 90);
+                                    if (z_rot[j] == 1) z_possible_rot.push_back(j * 90);
+                                }
+                                std::uniform_int_distribution<> disRotX(0, x_possible_rot.size() - 1);
+                                std::uniform_int_distribution<> disRotY(0, y_possible_rot.size() - 1);
+                                std::uniform_int_distribution<> disRotZ(0, z_possible_rot.size() - 1);
+
+                                x_deg = x_possible_rot[disRotX(gen)];
+                                y_deg = y_possible_rot[disRotY(gen)];
+                                z_deg = z_possible_rot[disRotZ(gen)];
+                            }
+                            //On set l'objet
+                            m_grid.setObject(instance, randomX, randomY, randomZ, x_deg, y_deg, z_deg);
+                            cellsDone.push_back(QVector3D(randomX, randomY, randomZ));
+
                             for (int j = 0; j < voisins.size(); j++) {
-                                if (m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).hasMesh) {
-                                    id = m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).object.tileModel()->id();
-                                    QSet set = getCorrespondingRules(voisins[j], QVector3D(randomX, randomY, randomZ), modeles[randomModel]);
-                                    if (!set.contains(id)) {
-                                        ruleBroken = true;
-                                        break;
-                                    }
-                                }
+                                m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).entropy++;
                             }
-                            //Si pas de probleme au niveaux des regles on prépare la rotation
-                            if (!ruleBroken) {
-                                objectSet = true;
-                                endModelChoice = true;
-                                TileModel model = *modeles[randomModel];
-                                Transform transform;
-                                TileInstance instance(new TileModel(model), transform);
-                                //On recherche le voisin prioritaire pour copier la rotation
-                                float x_deg, y_deg, z_deg = 0;
-                                int posPrio = findVectorPrio(voisins, cellsDone);
-                                Transform transformCopy = m_grid.getCell(
-                                                                    cellsDone[posPrio].x(),
-                                                                    cellsDone[posPrio].y(),
-                                                                    cellsDone[posPrio].z()).object.transform();
-                                QVector3D angles = transformCopy.getRotationAngles();
-                                angles=approxAngle(angles);
-                                int indexX = std::abs(angles[0] / 90.0f);
-                                int indexY = std::abs(angles[1] / 90.0f);
-                                int indexZ = std::abs(angles[2] / 90.0f);
-                                //Si la rotation du voisins prioritaire est possible pour le modele choisi on la copie
-                                if (model.getXRot()[indexX] == 1 && model.getYRot()[indexY] == 1 && model.getZRot()[indexZ] == 1) {
-                                    m_grid.getCell(
-                                              cellsDone[posPrio].x(),
-                                              cellsDone[posPrio].y(),
-                                              cellsDone[posPrio].z()).object.transform().rotation().getEulerAngles(&x_deg, &y_deg, &z_deg);
-                                //Sinon prise au hasard
-                                } else {
-                                    QVector<bool> x_rot = model.getXRot();
-                                    QVector<bool> y_rot = model.getYRot();
-                                    QVector<bool> z_rot = model.getZRot();
 
-                                    QVector<int> x_possible_rot;
-                                    QVector<int> y_possible_rot;
-                                    QVector<int> z_possible_rot;
-
-                                    for (int j = 0; j < 4; j++) {
-                                        if (x_rot[j] == 1) x_possible_rot.push_back(j * 90);
-                                        if (y_rot[j] == 1) y_possible_rot.push_back(j * 90);
-                                        if (z_rot[j] == 1) z_possible_rot.push_back(j * 90);
-                                    }
-                                    std::uniform_int_distribution<> disRotX(0, x_possible_rot.size() - 1);
-                                    std::uniform_int_distribution<> disRotY(0, y_possible_rot.size() - 1);
-                                    std::uniform_int_distribution<> disRotZ(0, z_possible_rot.size() - 1);
-
-                                    x_deg = x_possible_rot[disRotX(gen)];
-                                    y_deg = y_possible_rot[disRotY(gen)];
-                                    z_deg = z_possible_rot[disRotZ(gen)];
-                                }
-                                //On set l'objet
-                                m_grid.setObject(instance, randomX, randomY, randomZ, x_deg, y_deg, z_deg);
-                                cellsDone.push_back(QVector3D(randomX, randomY, randomZ));
-
-                                for (int j = 0; j < voisins.size(); j++) {
-                                    m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).entropy++;
-                                }
-                            }
 
                     }
                 }
@@ -493,73 +481,58 @@ void Wfc::runWFC(int k, QVector<TileModel*> &modeles, int mode) {
                         std::sort(list.begin(), list.end());
                         std::uniform_int_distribution<> disModele(0, list.size() - 1);
                         int randomModel = disModele(gen);
+                        Transform transform;
+                        TileModel model = *modeles[list[randomModel]];
+                        TileInstance instance(new TileModel(model), transform);
+                        //Récupération rotation prioritaire dans voisinage
+                        float x_deg, y_deg, z_deg = 0;
+                        int posPrio = findVectorPrio(voisins, cellsDone);
+                        Transform transformCopy = m_grid.getCell(cellsDone[posPrio].x(), cellsDone[posPrio].y(), cellsDone[posPrio].z()).object.transform();
+                        QVector3D angles = transformCopy.getRotationAngles();
+                        angles=approxAngle(angles);
+                        int indexX = std::abs(angles[0] / 90.0f);
+                        int indexY = std::abs(angles[1] / 90.0f);
+                        int indexZ = std::abs(angles[2] / 90.0f);
+                        //Si rotation prioritaire autorisée on la copie sinon au hasard parmi les possibilités du modele choisi
+                        if (model.getXRot()[indexX] == 1 && model.getYRot()[indexY] == 1 && model.getZRot()[indexZ] == 1) {
+                            m_grid.getCell(cellsDone[posPrio].x(), cellsDone[posPrio].y(), cellsDone[posPrio].z()).object.transform().rotation().getEulerAngles(&x_deg, &y_deg, &z_deg);
+                        } else {
+                            QVector<bool> x_rot = model.getXRot();
+                            QVector<bool> y_rot = model.getYRot();
+                            QVector<bool> z_rot = model.getZRot();
+                            QVector<int> x_possible_rot;
+                            QVector<int> y_possible_rot;
+                            QVector<int> z_possible_rot;
 
-                        bool ruleBroken = false;
-                        int id;
-                        //On vérifie les règles dans l'autre sens
+                            for (int j = 0; j < 4; j++) {
+                                if (x_rot[j] == 1) {
+                                    x_possible_rot.push_back(j * 90);
+                                }
+                                if (y_rot[j] == 1) {
+                                    y_possible_rot.push_back(j * 90);
+                                }
+                                if (z_rot[j] == 1) {
+                                    z_possible_rot.push_back(j * 90);
+                                }
+                            }
+
+                            std::uniform_int_distribution<> disRotX(0, x_possible_rot.size() - 1);
+                            std::uniform_int_distribution<> disRotY(0, y_possible_rot.size() - 1);
+                            std::uniform_int_distribution<> disRotZ(0, z_possible_rot.size() - 1);
+                            x_deg = x_possible_rot[disRotX(gen)];
+                            y_deg = y_possible_rot[disRotY(gen)];
+                            z_deg = z_possible_rot[disRotZ(gen)];
+                        }
+                        //On set l'objet
+                        m_grid.setObject(instance, randomX, randomY, randomZ, x_deg, y_deg, z_deg);
+                        cellsDone.push_back(pos);
+
+                        isSet = true;
                         for (int j = 0; j < voisins.size(); j++) {
-                            if (m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).hasMesh) {
-                                id = m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).object.tileModel()->id();
-                                if (!(getCorrespondingRules(voisins[j], QVector3D(randomX, randomY, randomZ), modeles[list[randomModel]]).contains(id))) {
-                                    ruleBroken = true;
-                                    break;
-                                }
-                            }
+                            m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).entropy++;
                         }
-                        //Si aucune règle n'est enfreinte on prépare les rotations
-                        if (!ruleBroken) {
-                            Transform transform;
-                            TileModel model = *modeles[list[randomModel]];
-                            TileInstance instance(new TileModel(model), transform);
-                            //Récupération rotation prioritaire dans voisinage
-                            float x_deg, y_deg, z_deg = 0;
-                            int posPrio = findVectorPrio(voisins, cellsDone);
-                            Transform transformCopy = m_grid.getCell(cellsDone[posPrio].x(), cellsDone[posPrio].y(), cellsDone[posPrio].z()).object.transform();
-                            QVector3D angles = transformCopy.getRotationAngles();
-                            angles=approxAngle(angles);
-                            int indexX = std::abs(angles[0] / 90.0f);
-                            int indexY = std::abs(angles[1] / 90.0f);
-                            int indexZ = std::abs(angles[2] / 90.0f);
-                            //Si rotation prioritaire autorisée on la copie sinon au hasard parmi les possibilités du modele choisi
-                            if (model.getXRot()[indexX] == 1 && model.getYRot()[indexY] == 1 && model.getZRot()[indexZ] == 1) {
-                                m_grid.getCell(cellsDone[posPrio].x(), cellsDone[posPrio].y(), cellsDone[posPrio].z()).object.transform().rotation().getEulerAngles(&x_deg, &y_deg, &z_deg);
-                            } else {
-                                QVector<bool> x_rot = model.getXRot();
-                                QVector<bool> y_rot = model.getYRot();
-                                QVector<bool> z_rot = model.getZRot();
-                                QVector<int> x_possible_rot;
-                                QVector<int> y_possible_rot;
-                                QVector<int> z_possible_rot;
+                        c++;
 
-                                for (int j = 0; j < 4; j++) {
-                                    if (x_rot[j] == 1) {
-                                        x_possible_rot.push_back(j * 90);
-                                    }
-                                    if (y_rot[j] == 1) {
-                                        y_possible_rot.push_back(j * 90);
-                                    }
-                                    if (z_rot[j] == 1) {
-                                        z_possible_rot.push_back(j * 90);
-                                    }
-                                }
-
-                                std::uniform_int_distribution<> disRotX(0, x_possible_rot.size() - 1);
-                                std::uniform_int_distribution<> disRotY(0, y_possible_rot.size() - 1);
-                                std::uniform_int_distribution<> disRotZ(0, z_possible_rot.size() - 1);
-                                x_deg = x_possible_rot[disRotX(gen)];
-                                y_deg = y_possible_rot[disRotY(gen)];
-                                z_deg = z_possible_rot[disRotZ(gen)];
-                            }
-                            //On set l'objet
-                            m_grid.setObject(instance, randomX, randomY, randomZ, x_deg, y_deg, z_deg);
-                            cellsDone.push_back(pos);
-
-                            isSet = true;
-                            for (int j = 0; j < voisins.size(); j++) {
-                                m_grid.getCell(voisins[j].x(), voisins[j].y(), voisins[j].z()).entropy++;
-                            }
-                            c++;
-                        }
                     }
                 }
 
