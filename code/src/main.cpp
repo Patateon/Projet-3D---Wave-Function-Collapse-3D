@@ -2,15 +2,20 @@
 #include <QApplication>
 #include <QMainWindow>
 #include <QToolBar>
-#include "MyViewer.h"
+#include "mainviewer.h"
 
-
+void printQSet(const QSet<int>& set) {
+    for (const int& element : set) {
+        std::cout << element<<std::endl;
+    }
+}
 
 int main( int argc , char** argv )
 {
     QApplication app( argc , argv );
 
-    MyViewer * viewer = new MyViewer;
+    MainViewer * viewer = new MainViewer;
+    viewer->hide();
 
     QMainWindow * mainWindow = new QMainWindow;
     QToolBar * toolBar = new QToolBar;
@@ -18,15 +23,17 @@ int main( int argc , char** argv )
     toolBar->setAutoFillBackground(true);
     toolBar->setStyleSheet("QToolBar { background: white; }");
     viewer->add_actions_to_toolBar(toolBar);
-
     mainWindow->addToolBar(toolBar);
 
     mainWindow->setCentralWidget(viewer);
+    viewer->setMainWindow(mainWindow);
 
-    QObject::connect( viewer , SIGNAL(windowTitleUpdated(QString)) , mainWindow , SLOT(setWindowTitle(QString)) );
+    QObject::connect(viewer, SIGNAL(windowTitleUpdated(QString)),
+                     mainWindow, SLOT(setWindowTitle(QString)));
     viewer->updateTitle("Wave Function Collapse");
 
     mainWindow->setWindowIcon(QIcon("img/icons/icon.png"));
+    mainWindow->setMinimumSize(800, 600);
     mainWindow->show();
 
     return app.exec();

@@ -5,25 +5,39 @@ INCLUDEPATH += .
 INCLUDEPATH += ./src
 QT += opengl xml
 CONFIG += qt \
-    release
+    release \
+    debug
 MOC_DIR = ./tmp/moc
 OBJECTS_DIR = ./tmp/obj
 
 # Input
 HEADERS += ./src/point3.h \
     ./src/Mesh.h \
-    ./src/MyViewer.h \
     ./src/BasicIO.h \
     ./src/gl/GLUtilityMethods.h \
     ./src/gl/BasicColors.h \
-    ./src/gameobject.h \
-    src/transform.h
+    ./src/tilemodel.h \
+    src/OBJ_Loader.h \
+    src/basicviewer.h \
+    src/mainviewer.h \
+    src/material.h \
+    src/tileinstance.h \
+    src/transform.h \
+    ./src/grid.h \
+    src/wfc.h
 SOURCES += ./src/main.cpp \
     ./src/gl/GLUtilityMethods.cpp\
     ./src/gl/BasicColors.cpp \
-    ./src/gameobject.cpp \
-    src/transform.cpp
+    ./src/tilemodel.cpp \
+    src/basicviewer.cpp \
+    src/mainviewer.cpp \
+    src/material.cpp \
+    src/tileinstance.cpp \
+    ./src/grid.cpp \
+    src/transform.cpp \
+    src/wfc.cpp
 
+RESOURCES += shaders/
 
 
 EXT_DIR = extern
@@ -49,3 +63,11 @@ release:QMAKE_CXXFLAGS_RELEASE += -O3 \
     -fopenmp
 release:QMAKE_CFLAGS_RELEASE += -O3 \
     -fopenmp
+
+DISTFILES += \
+    shaders/basicViewer.vert \
+    shaders/gshader.glsl \
+    shaders/lineFShader.glsl \
+    shaders/lineVShader.glsl \
+    src/shader/fshader.glsl \
+    src/shader/vshader.glsl
